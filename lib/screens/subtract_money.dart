@@ -167,7 +167,7 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                 )
                     :
 
-                RaisedButton(
+                ElevatedButton(
                   onPressed: () async {
                     if (_key.currentState!.validate()) {
                       if(selectedCategory == null){
@@ -181,7 +181,6 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                       await _subtractMoney();
                     }
                   },
-                  color: Colors.blue,
                   child: const Text(
                     'SUBMIT',
                     style: TextStyle(color: Colors.white, fontSize: 18),

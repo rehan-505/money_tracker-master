@@ -197,7 +197,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                 )
                     :
 
-                RaisedButton(
+                ElevatedButton(
                   onPressed: () async {
                     if (_key.currentState!.validate()) {
                       if(selectedCategory == null){
@@ -211,7 +211,6 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                       await _addMoney();
                     }
                   },
-                  color: Colors.blue,
                   child: const Text(
                     'Save',
                     style: TextStyle(color: Colors.white, fontSize: 18),

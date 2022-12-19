@@ -49,7 +49,7 @@ class MyApp extends StatelessWidget {
       theme: ThemeData(
         primarySwatch: Colors.blue,
       ),
-      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("17-08-2022")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
+      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("27-12-2022")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
     );
   }
 }

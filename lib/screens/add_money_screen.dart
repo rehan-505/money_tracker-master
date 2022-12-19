@@ -171,7 +171,7 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                     )
                     :
 
-                RaisedButton(
+                ElevatedButton(
                   onPressed: () async {
                     if (_key.currentState!.validate()) {
                       if(selectedCategory == null){
@@ -185,7 +185,6 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                       await _addMoney();
                     }
                   },
-                  color: Colors.blue,
                   child: const Text(
                     'SUBMIT',
                     style: TextStyle(color: Colors.white, fontSize: 18),

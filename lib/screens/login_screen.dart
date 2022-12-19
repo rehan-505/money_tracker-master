@@ -96,13 +96,12 @@ class _LoginState extends State<Login> {
                       height: 15,
                     ),
 
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () async {
                         if (_key.currentState!.validate()) {
                           await _login();
                         }
                       },
-                      color: Colors.blue,
                       child: Text(
                         'LOGIN',
                         style: TextStyle(color: Colors.white, fontSize: 18),

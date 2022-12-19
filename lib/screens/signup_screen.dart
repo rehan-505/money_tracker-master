@@ -154,13 +154,12 @@ class _SignUpScreenState extends State<SignUpScreen> {
                     ),
 
 
-                    RaisedButton(
+                    ElevatedButton(
                       onPressed: () async {
                         if (_key.currentState!.validate()) {
                           await _signup();
                         }
                       },
-                      color: Colors.blue,
                       child: const Text(
                         'Sign Up',
                         style: TextStyle(color: Colors.white, fontSize: 18),

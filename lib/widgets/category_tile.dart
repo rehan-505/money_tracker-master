@@ -1,21 +1,42 @@
 import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flex_color_picker/flex_color_picker.dart';
 import 'package:flutter/material.dart';
 import 'package:money_tracker/models/category.dart';
 import 'package:money_tracker/utils/collection_names.dart';
 import 'package:money_tracker/utils/db_operations.dart';
 
-class CategoryTile extends StatelessWidget {
-  const CategoryTile({Key? key, required this.category}) : super(key: key);
+class CategoryTile extends StatefulWidget {
+  const CategoryTile({Key? key, required this.category, required this.index, }) : super(key: key);
 
   final CategoryModel category;
+  final int index;
+
+  @override
+  State<CategoryTile> createState() => _CategoryTileState();
+}
+
+class _CategoryTileState extends State<CategoryTile> {
+
+ int index = 0;
+
+  @override
+  void initState() {
+    index = widget.index;
+    // TODO: implement initState
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
 
+    // FirebaseFirestore.instance.collection('categories').doc(widget.category.uid).update({
+    //     'index': index
+    //   });
+
     // print(DBOperations.hexToColor(category.colorCode.toString()));
 
-    print(int.parse("0x${category.colorCode}"));
+    // print(int.parse("0x${widget.category.colorCode}"));
 
     return Padding(
       padding: const EdgeInsets.only(bottom: 16.0),
@@ -25,7 +46,11 @@ class CategoryTile extends StatelessWidget {
           margin: const EdgeInsets.all(16),
           child: Row(
             children: [
-              Icon(Icons.category,color: Color(category.colorCode).withOpacity(1)),
+
+              ReorderableDragStartListener(
+                  // key: ValueKey(index) ,
+                  index: index,
+                  child: const Icon(Icons.drag_indicator,size: 35,color: Colors.grey,)),
               const SizedBox(
                 width: 10,
               ),
@@ -34,7 +59,7 @@ class CategoryTile extends StatelessWidget {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     mainAxisSize: MainAxisSize.min,
                     children: [
-                      Text(category.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(category.colorCode).withOpacity(1)),),
+                      Text(widget.category.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(widget.category.colorCode).withOpacity(1)),),
                       const SizedBox(
                         height: 4,
                       ),
@@ -48,57 +73,73 @@ class CategoryTile extends StatelessWidget {
                       // ),
                     ],
                   )),
-              Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                   InkWell(
-                      onTap: () async{
-                        await showDialog(
-                            context: context,
-                            barrierColor: Colors.transparent,
-                            builder: (BuildContext ctx) {
-                              return                       BackdropFilter(
-                                filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                                child: AlertDialog(
-                                  elevation: 10,
-                                  content: const Text('Are you sure you want to delete this category ?'),
-                                  actions: [
-                                    TextButton(
-                                        onPressed: () async {
-                                          Navigator.of(context).pop();
-                                          await FirebaseFirestore.instance
-                                              .collection(Collections.categories)
-                                              .doc(category.uid)
-                                              .delete();
+              InkWell(
+                  onTap: ()async{
+                    int colorCode = (await showColorPickerDialog(context, Color(widget.category.colorCode))).value;
+                    updateColor(colorCode);
 
-                                        },
-                                        child: const Text(
-                                          'Yes',
-                                          style: TextStyle(color: Colors.brown),
-                                        )),
-                                    TextButton(
-                                        onPressed: () {
-                                          Navigator.of(context).pop();
-                                        },
-                                        child:
-                                        const Text('No', style: TextStyle(color: Colors.brown)))
-                                  ],
-                                ),
-                              );
-                            });
+                    },
+                  child: Icon(Icons.color_lens,color: Color(widget.category.colorCode).withOpacity(1))),
+              SizedBox(width: 20,),
+              InkWell(
+                 onTap: () async{
+                   await showDialog(
+                       context: context,
+                       barrierColor: Colors.transparent,
+                       builder: (BuildContext ctx) {
+                         return                       BackdropFilter(
+                           filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+                           child: AlertDialog(
+                             elevation: 10,
+                             content: const Text('Are you sure you want to delete this category ?'),
+                             actions: [
+                               TextButton(
+                                   onPressed: () async {
+                                     Navigator.of(context).pop();
+                                     await FirebaseFirestore.instance
+                                         .collection(Collections.categories)
+                                         .doc(widget.category.uid)
+                                         .delete();
+
+                                   },
+                                   child: const Text(
+                                     'Yes',
+                                     style: TextStyle(color: Colors.brown),
+                                   )),
+                               TextButton(
+                                   onPressed: () {
+                                     Navigator.of(context).pop();
+                                   },
+                                   child:
+                                   const Text('No', style: TextStyle(color: Colors.brown)))
+                             ],
+                           ),
+                         );
+                       });
 
 
-                      },
-                      child: const Icon(
-                        Icons.delete_forever_sharp,
-                        color: Colors.red,
-                      ))
-                ],
-              )
+                 },
+                 child: const Icon(
+                   Icons.delete_forever_sharp,
+                   color: Colors.red,
+                 ))
             ],
           ),
         ),
       ),
     );
+  }
+
+  updateColor(int colorCode) async{
+
+    if(colorCode==widget.category.colorCode){
+      print("color code is same");
+      return;
+    }
+
+    // print("into update color");
+    FirebaseFirestore.instance.collection('categories').doc(widget.category.uid).update({
+      'colorCode': colorCode
+    });
   }
 }

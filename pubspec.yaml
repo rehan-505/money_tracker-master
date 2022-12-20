@@ -46,6 +46,7 @@ dependencies:
   flutter_share: ^2.0.0
   share_plus: ^4.0.10
   fluttertoast: ^8.0.9
+  flex_color_picker: ^3.0.0
 
 
 

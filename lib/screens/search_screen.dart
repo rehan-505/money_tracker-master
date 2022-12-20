@@ -167,6 +167,7 @@ class _SearchScreenState extends State<SearchScreen> {
                               (searchController.text.trim().isEmpty) ||
                               transaction.desc.toLowerCase().contains(
                                   searchController.text.toLowerCase())
+                          || ( transaction.amount == (double.tryParse(searchController.text))  )
                           ) {
                             return TransactionCard(
                                 transactionModel: transaction);

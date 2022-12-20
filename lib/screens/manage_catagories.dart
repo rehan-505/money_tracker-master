@@ -8,20 +8,29 @@ import 'package:money_tracker/widgets/category_tile.dart';
 import 'package:uuid/uuid.dart';
 
 import '../utils/collection_names.dart';
+import 'package:flex_color_picker/flex_color_picker.dart';
 
-
-class ManageCategoriesScreen extends StatelessWidget {
+class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({Key? key}) : super(key: key);
 
   @override
+  State<ManageCategoriesScreen> createState() => _ManageCategoriesScreenState();
+}
+
+class _ManageCategoriesScreenState extends State<ManageCategoriesScreen> {
+
+  List<CategoryModel> categories = [];
+
+  @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(title: const Text("Manage Categories"), centerTitle: true,),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
         child: StreamBuilder(
             stream: FirebaseFirestore.instance
-                .collection(Collections.categories).orderBy('createdAt')
+                .collection(Collections.categories).orderBy('index')
                 .snapshots(),
             builder: (context,
                 AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
@@ -46,11 +55,11 @@ class ManageCategoriesScreen extends StatelessWidget {
 
               // List<QueryDocumentSnapshot> documents = snapshot.data!.docs.sort()
 
-              return ListView.builder(
-                  itemCount: snapshot.data!.size ,
-                  itemBuilder: (context, index) {
-                    return CategoryTile(category: CategoryModel.fromMap(snapshot.data!.docs[index].data()));
-                  });
+               categories =  snapshot.data!.docs.map((e) => CategoryModel.fromMap(e.data())).toList();
+
+              return ReorderableCategoriesList(categories: categories);
+
+
             }),
       ),
       floatingActionButton: FloatingActionButton(
@@ -64,7 +73,7 @@ class ManageCategoriesScreen extends StatelessWidget {
                   filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
                   child: AlertDialog(
                     elevation: 10,
-                    title: Text("Add new category"),
+                    title: const Text("Add new category"),
                     content: TextFormField(
                       controller: controller,
                       decoration: const InputDecoration(
@@ -85,7 +94,7 @@ class ManageCategoriesScreen extends StatelessWidget {
                           onPressed: () async {
                             Navigator.of(context).pop();
                             if(controller.text.isNotEmpty){
-                              CategoryModel categoryModel = CategoryModel(title: controller.text, uid: const Uuid().v4(), createdAt: Timestamp.now(), colorCode: (math.Random().nextDouble() * 0xFFFFFF).toInt());
+                              CategoryModel categoryModel = CategoryModel(title: controller.text, uid: const Uuid().v4(), createdAt: Timestamp.now(), colorCode: (math.Random().nextDouble() * 0xFFFFFF).toInt(), index: categories.length);
                               try{
                                 await FirebaseFirestore.instance
                                     .collection(Collections.categories)
@@ -113,3 +122,40 @@ class ManageCategoriesScreen extends StatelessWidget {
     );
   }
 }
+
+class ReorderableCategoriesList extends StatefulWidget {
+  const ReorderableCategoriesList({Key? key, required this.categories}) : super(key: key);
+
+  final List<CategoryModel> categories;
+
+  @override
+  State<ReorderableCategoriesList> createState() => _ReorderableCategoriesListState();
+}
+
+class _ReorderableCategoriesListState extends State<ReorderableCategoriesList> {
+  @override
+  Widget build(BuildContext context) {
+    return ReorderableList(
+      shrinkWrap: true,
+      itemCount: widget.categories.length ,
+      itemBuilder: (context, index) {
+        return Container(
+            key: ValueKey(index),
+            child: CategoryTile(category: widget.categories[index], index: index,));
+      }, onReorder: (int oldIndex, int newIndex) async{
+      // CategoryModel categoryModel = widget.categories.removeAt(oldIndex);
+      // widget.categories.insert( newIndex > oldIndex ?   newIndex-1 : newIndex, categoryModel);
+
+
+      FirebaseFirestore.instance.collection('categories').doc(widget.categories[oldIndex].uid).update({
+        'index' : newIndex
+      });
+
+      FirebaseFirestore.instance.collection('categories').doc(widget.categories[newIndex].uid).update({
+        'index' : oldIndex
+      });
+
+    },);
+  }
+}
+

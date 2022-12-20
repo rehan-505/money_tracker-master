@@ -5,8 +5,10 @@ class CategoryModel{
   final String uid;
   final Timestamp createdAt;
   final int colorCode;
+  final int index;
 
-  const CategoryModel({
+  const CategoryModel( {
+    required this.index,
     required this.title,
     required this.uid,
     required this.createdAt,
@@ -18,7 +20,8 @@ class CategoryModel{
       'title': title,
       'uid': uid,
       'createdAt': createdAt,
-      'colorCode' : colorCode
+      'colorCode' : colorCode,
+      'index' : index
     };
   }
 
@@ -28,6 +31,7 @@ class CategoryModel{
       uid: map['uid'] as String,
       createdAt: map['createdAt'] as Timestamp,
       colorCode: map['colorCode'] as int,
+      index: map['index'] ?? -1
     );
   }
 }

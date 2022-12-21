@@ -16,10 +16,10 @@ class UsersListScreen extends StatelessWidget {
       appBar: AppBar(title: Text("Users"), centerTitle: true,),
       body: Padding(
         padding: const EdgeInsets.symmetric(vertical: 16.0, horizontal: 16),
-        child: StreamBuilder(
-            stream: FirebaseFirestore.instance
+        child: FutureBuilder(
+            future: FirebaseFirestore.instance
                 .collection(Collections.users).orderBy("createdAt", descending: true)
-                .snapshots(),
+                .get(),
             builder: (context,
                 AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
                 snapshot) {

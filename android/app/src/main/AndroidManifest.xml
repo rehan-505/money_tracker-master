@@ -10,7 +10,7 @@
         tools:ignore="ScopedStorage" />
 
     <application
-        android:label="Kitaab"
+        android:label="Kitaab New"
         android:name="${applicationName}"
         android:icon="@mipmap/ic_launcher">
         <activity

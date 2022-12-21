@@ -211,6 +211,7 @@ class _SignUpScreenState extends State<SignUpScreen> {
       }
     } catch (e) {
       Get.snackbar("Error", e.toString());
+      rethrow;
     }
 
     setState(() {

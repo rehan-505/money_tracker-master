@@ -131,7 +131,7 @@ class DBOperations{
     try{
       DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection(Collections.totalAmount).doc(DateFormat('dd-MM-yyyy').format(DateTime.now())).get();
       if(!documentSnapshot.exists){
-        FirebaseFirestore.instance.collection(Collections.totalAmount).doc(DateFormat('dd-MM-yyyy').format(DateTime.now())).set(const TotalAmount(cash: 0, card: 0,cardAllTimeAdded: 0,cardAllTimeWithdraw: 0,cashAllTimeAdded: 0,cashAllTimeWithdraw: 0).toMap());
+        FirebaseFirestore.instance.collection(Collections.totalAmount).doc(DateFormat('dd-MM-yyyy').format(DateTime.now())).set(const TotalAmount(cash: 0, card: 0,cardAllTimeAdded: 0,cardAllTimeWithdraw: 0,cashAllTimeAdded: 0,cashAllTimeWithdraw: 0,bank: 0,bankAllTimeAdded: 0,bankAllTimeWithdraw: 0).toMap());
       }
     }
     catch(e){

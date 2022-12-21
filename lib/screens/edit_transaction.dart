@@ -145,8 +145,8 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
                   height: 15,
                 ),
 
-                StreamBuilder(
-                    stream: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').snapshots(),
+                FutureBuilder(
+                    future: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').get(),
                     builder: (context,AsyncSnapshot<QuerySnapshot<Map<String,dynamic>>> snapshot) {
 
                       if(!(snapshot.hasData) || snapshot.connectionState==ConnectionState.waiting){

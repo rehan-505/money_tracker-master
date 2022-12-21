@@ -10,6 +10,7 @@ import 'package:money_tracker/widgets/transaction_card.dart';
 import '../controllers/transaction_screen_amount_controller.dart';
 import '../utils/global_constants.dart';
 import '../models/category.dart';
+import '../utils/global_functions.dart';
 import '../widgets/dropdown_button.dart';
 
 class TransactionsScreen extends StatefulWidget {
@@ -30,9 +31,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   final FiltersCollapseController collapseController =
       FiltersCollapseController();
 
-  final bool streamBuilderLoaded = false;
-
-  String? selectedPaymentMode = 'Both Payment Modes';
+  String? selectedPaymentMode = 'All Payment Modes';
 
   final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
@@ -44,8 +43,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   @override
   Widget build(BuildContext context) {
-
-    print("total added cash is : ${amountController.totalAddedCash}");
 
     // print(amountController.totalAmountCard);
     // amountController.reset();
@@ -204,11 +201,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                   height: 10,
                                 ),
 
-                                StreamBuilder(
-                                    stream: FirebaseFirestore.instance
+                                FutureBuilder(
+                                    future: FirebaseFirestore.instance
                                         .collection(Collections.categories)
                                         .orderBy('createdAt')
-                                        .snapshots(),
+                                        .get(),
                                     builder: (context,
                                         AsyncSnapshot<
                                                 QuerySnapshot<
@@ -258,9 +255,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 MyDropDownButton(
                                   dropdownValue: selectedPaymentMode,
                                   items: const [
-                                    'Both Payment Modes',
+                                    'All Payment Modes',
                                     'cash',
                                     'card',
+                                    'bank'
                                   ],
                                   function: (String v) {
                                     selectedPaymentMode = v;
@@ -272,23 +270,22 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 ),
                                 buttonsRow(),
                                 const SizedBox(height: 10),
-                                StreamBuilder(
-                                  stream: (selectedStartDate == null || selectedEndDate == null)
+                                FutureBuilder(
+                                  future: (selectedStartDate == null || selectedEndDate == null)
                                       ? FirebaseFirestore.instance
                                       .collection(Collections.transactions)
                                       .orderBy("createdAt", descending: true)
-                                      .snapshots()
+                                      .get()
                                       : FirebaseFirestore.instance
                                       .collection(Collections.transactions)
                                       .where("createdAt",
                                       isGreaterThanOrEqualTo: selectedStartDate,
                                       isLessThanOrEqualTo: selectedEndDate)
                                       .orderBy("createdAt", descending: true)
-                                      .snapshots(),
+                                      .get(),
                                   builder: (context, AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
                                     amountController.reset();
                                     if(snapshot.hasData && (!(snapshot.connectionState==ConnectionState.waiting)) ){
-                                      int count = 0;
                                       for(int i=0; i< snapshot.data!.docs.length; i++){
                                         TransactionModel transaction = TransactionModel.fromMap(snapshot.data!.docs[i].data());
                                         if (((transaction.category == selectedCategory) ||
@@ -297,30 +294,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                             ((transaction.transactionType ==
                                                 selectedPaymentMode) ||
                                                 selectedPaymentMode!.toLowerCase() ==
-                                                    'both payment modes')
+                                                    'all payment modes')
                                             && (transaction.desc.toLowerCase().contains(searchController.text.toLowerCase()) || transaction.category.toLowerCase().contains(searchController.text.toLowerCase()))
                                         ){
-                                          count++;
-                                          // print("before transaction $count :");
-                                          // print("total added cash: ${amountController.totalAddedCash}");
-                                          // print("total withdraw cash: ${amountController.totalWithdrawCash}");
-                                          // print("total added card: ${amountController.totalAddedCard}");
-                                          // print("total withdraw card: ${amountController.totalWithdrawCard}");
                                           setAmounts(transaction);
-                                          // print("after transaction $count :");
-                                          // print("total added cash: ${amountController.totalAddedCash}");
-                                          // print("total withdraw cash: ${amountController.totalWithdrawCash}");
-                                          // print("total added card: ${amountController.totalAddedCard}");
-                                          // print("total withdraw card: ${amountController.totalWithdrawCard}\n\n");
-
-
-                                          // print("before transaction $count :");
-                                          // // setAmounts(transaction);
-                                          // print("after transaction $count :");
-
-
-
-
 
                                         }
                                       }
@@ -330,23 +307,34 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                       children: [
                                         Expanded(
                                             child: amountContainer(
-                                          "Total Amount (Cash)",
-                                          amountController.totalAmountCash.toString(),
-                                          amountController.totalAddedCash.toString(),
-                                          amountController.totalWithdrawCash
-                                              .toString(),
-                                        )),
+                                              "Cash",
+                                              amountController.totalAmountCash.toString(),
+                                              amountController.totalAddedCash.toString(),
+                                              amountController.totalWithdrawCash
+                                                  .toString(),
+                                            )),
                                         const SizedBox(
                                           width: 15,
                                         ),
                                         Expanded(
                                             child: amountContainer(
-                                          "Total Amount (Card)",
-                                          amountController.totalAmountCard.toString(),
-                                          amountController.totalAddedCard.toString(),
-                                          amountController.totalWithdrawCard
-                                              .toString(),
-                                        )),
+                                              "Card",
+                                              amountController.totalAmountCard.toString(),
+                                              amountController.totalAddedCard.toString(),
+                                              amountController.totalWithdrawCard
+                                                  .toString(),
+                                            )),
+                                        const SizedBox(
+                                          width: 15,
+                                        ),
+                                        Expanded(
+                                            child: amountContainer(
+                                              "Bank",
+                                              amountController.totalAmountBank.toString(),
+                                              amountController.totalAddedBank.toString(),
+                                              amountController.totalWithdrawBank
+                                                  .toString(),
+                                            ))
                                       ],
                                     );
                                   }
@@ -365,19 +353,19 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 const SizedBox(
                   height: 10,
                 ),
-                StreamBuilder(
-                    stream:  (selectedStartDate == null || selectedEndDate == null)
+                FutureBuilder(
+                    future:  (selectedStartDate == null || selectedEndDate == null)
                             ? FirebaseFirestore.instance
                                 .collection(Collections.transactions)
                                 .orderBy("createdAt", descending: true)
-                                .snapshots()
+                                .get()
                             : FirebaseFirestore.instance
                                 .collection(Collections.transactions)
                                 .where("createdAt",
                                     isGreaterThanOrEqualTo: selectedStartDate,
                                     isLessThanOrEqualTo: selectedEndDate)
                                 .orderBy("createdAt", descending: true)
-                                .snapshots(),
+                                .get(),
                     builder: (context,
                         AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
                             snapshot) {
@@ -401,7 +389,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
                       return ListView.builder(
                         shrinkWrap: true,
-                          physics: NeverScrollableScrollPhysics(),
+                          physics: const NeverScrollableScrollPhysics(),
                           itemCount: isAdmin ? snapshot.data!.size : 10,
                           itemBuilder: (context, index) {
                             TransactionModel transaction =
@@ -413,7 +401,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                                 ((transaction.transactionType ==
                                         selectedPaymentMode) ||
                                     selectedPaymentMode!.toLowerCase() ==
-                                        'both payment modes')
+                                        'all payment modes')
                                 && (transaction.desc.toLowerCase().contains(searchController.text.toLowerCase()) || transaction.category.toLowerCase().contains(searchController.text.toLowerCase()))
                             ) {
                               // setAmounts(transaction);
@@ -438,7 +426,13 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       if (transaction.transactionType == 'cash') {
         amountController.totalAmountCash = transaction.amount + amountController.totalAmountCash;
         amountController.totalAddedCash = transaction.amount + amountController.totalAddedCash;
-      } else {
+      }
+      else if (transaction.transactionType=='bank'){
+        amountController.totalAmountBank = amountController.totalAmountBank + transaction.amount;
+        amountController.totalAddedBank = transaction.amount + amountController.totalAddedBank;
+      }
+
+      else {
         amountController.totalAmountCard = amountController.totalAmountCard + transaction.amount;
         amountController.totalAddedCard = transaction.amount + amountController.totalAddedCard;
       }
@@ -446,12 +440,20 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       if (transaction.transactionType == 'cash') {
         amountController.totalAmountCash = amountController.totalAmountCash - transaction.amount;
         amountController.totalWithdrawCash = transaction.amount + amountController.totalWithdrawCash;
-      } else {
+      }
+      else if (transaction.transactionType=='bank'){
+        amountController.totalAmountBank = amountController.totalAmountBank - transaction.amount;
+        amountController.totalWithdrawBank = transaction.amount + amountController.totalWithdrawBank;
+      }
+
+
+      else {
         amountController.totalAmountCard = amountController.totalAmountCard - transaction.amount;
         amountController.totalWithdrawCard = transaction.amount + amountController.totalWithdrawCard;
       }
     }
   }
+
 
   Widget buttonsRow() {
     return Column(
@@ -480,7 +482,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     startTimeController.text = '';
                     endTimeController.text = '';
                     selectedCategory = 'All Categories';
-                    selectedPaymentMode = 'Both Payment Modes';
+                    selectedPaymentMode = 'All Payment Modes';
                     setState(() {});
                   },
                   child: const Text("Reset")),
@@ -490,82 +492,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         // const SizedBox(height: 10,),
         ///Users and Transaction Button
       ],
-    );
-  }
-
-  Widget amountContainer(String title, String amount, String totalAdded, String totalWithdrawal) {
-    return SizedBox(
-      width: double.infinity,
-      child: Material(
-        elevation: 2,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(
-                height: 10,
-              ),
-              Text(
-                amount,
-                style: const TextStyle(
-                    color: Colors.blue,
-                    fontSize: 16,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0, right: 8),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                      children: [
-                        const Text("Total Added:"),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          totalAdded,
-                          style: const TextStyle(
-                              color: Colors.green, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    Row(
-                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
-                      children: [
-                        const Text("Total Withdrawn:"),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          totalWithdrawal,
-                          style: const TextStyle(
-                              color: Colors.red, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
-        ),
-      ),
     );
   }
 }

@@ -125,8 +125,8 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                   height: 15,
                 ),
 
-                StreamBuilder(
-                    stream: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').snapshots(),
+                FutureBuilder(
+                    future: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').get(),
                     builder: (context,AsyncSnapshot<QuerySnapshot<Map<String,dynamic>>> snapshot) {
                       List<String> categories = [];
 
@@ -152,7 +152,7 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
 
 
 
-                MyDropDownButton(dropdownValue: selectedPaymentMode, items: const ["cash","card"], function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
+                MyDropDownButton(dropdownValue: selectedPaymentMode, items: const ["cash","card","bank"], function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
 
                 SizedBox(
                   height: 15,
@@ -210,7 +210,10 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
       loading = true;
     });
     TotalAmount totalAmount = await DBOperations.getTotalAmount();
-   if ( ((selectedPaymentMode=='card')  && (double.parse(amountController.text)<=totalAmount.card)) || ((selectedPaymentMode=='cash')  && (double.parse(amountController.text)<=totalAmount.cash))) {
+   if ( ((selectedPaymentMode=='card')  && (double.parse(amountController.text)<=totalAmount.card)) || ((selectedPaymentMode=='cash')  && (double.parse(amountController.text)<=totalAmount.cash))
+   || ((selectedPaymentMode=='bank')  && (double.parse(amountController.text)<=totalAmount.bank))
+
+   ) {
       try {
         final String id = const Uuid().v4();
         final AppUser currentUser = (await DBOperations.getCurrentUser())!;

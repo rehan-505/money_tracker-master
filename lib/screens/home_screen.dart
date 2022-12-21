@@ -8,6 +8,7 @@ import 'package:money_tracker/controllers/logout_controller.dart';
 import 'package:money_tracker/models/transaction.dart';
 import 'package:money_tracker/screens/add_money_screen.dart';
 import 'package:money_tracker/screens/login_screen.dart';
+import 'package:money_tracker/screens/positive_transactions_screen.dart';
 import 'package:money_tracker/screens/show_users_screen.dart';
 import 'package:money_tracker/screens/subtract_money.dart';
 import 'package:money_tracker/screens/transactions_screen.dart';
@@ -18,6 +19,7 @@ import 'package:money_tracker/widgets/transaction_card.dart';
 import '../controllers/transaction_screen_amount_controller.dart';
 import '../notification_service/local_notification_service.dart';
 import '../utils/global_constants.dart';
+import '../utils/global_functions.dart';
 
 class HomeScreen extends StatefulWidget {
   const HomeScreen({Key? key}) : super(key: key);
@@ -92,53 +94,25 @@ class _HomeScreenState extends State<HomeScreen> {
   TransactionScreenAmountController();
 
 
-  final LogOutController logOutController = LogOutController();
-
-
   @override
   Widget build(BuildContext context) {
 
 
 
     return Scaffold(
-      drawer: const CustomDrawer(),
+      drawer: CustomDrawer(),
       appBar: AppBar(
         title: const Text("Kitaab"),
         centerTitle: true,
         actions: [
-          Obx(() => logOutController.loading.value
-              ? const SizedBox(
-                  height: 30,
-                  width: 30,
-                  child: CircularProgressIndicator(
-                    color: Colors.white,
-                  ),
-                )
-              : InkWell(
-                  onTap: () async {
-                    logOutController.loading.value = true;
-                    try {
-                      String fcmToken =
-                          await DBOperations.getDeviceTokenToSendNotification();
-                      List<String> tokenList = [fcmToken];
-                      await FirebaseFirestore.instance
-                          .collection(Collections.users)
-                          .doc(FirebaseAuth.instance.currentUser!.uid)
-                          .update(
-                              {"fcmTokens": FieldValue.arrayRemove(tokenList)});
-                    } catch (e) {
-                      print(e);
-                    }
-                    DBOperations.currentUser = null;
-                    DBOperations.fcmToken = null;
-                    await FirebaseAuth.instance.signOut();
+          InkWell(child: Icon(Icons.refresh_outlined),
+          onTap: (){
+            setState(() {
 
-                    logOutController.loading.value = false;
-
-                    Get.offAll(() => Login());
-                  },
-                  child: const Icon(Icons.logout))),
-          const SizedBox(
+            });
+          },
+          ),
+          SizedBox(
             width: 20,
           ),
         ],
@@ -146,17 +120,16 @@ class _HomeScreenState extends State<HomeScreen> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Column(
-          // mainAxisAlignment: MainAxisAlignment.spaceBetween,
           children: [
             const SizedBox(
               height: 10,
             ),
             isAdmin
-                ?StreamBuilder(
-                stream: FirebaseFirestore.instance
+                ?FutureBuilder(
+                future: FirebaseFirestore.instance
                     .collection(Collections.transactions)
                     .orderBy("createdAt", descending: true)
-                    .snapshots(),
+                    .get(),
                 builder: (context, AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
                   amountController.reset();
                   if(snapshot.hasData && (!(snapshot.connectionState==ConnectionState.waiting)) ){
@@ -165,22 +138,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       TransactionModel transaction = TransactionModel.fromMap(snapshot.data!.docs[i].data());
                       if (DateFormat('dd-MM-yyyy').format(DateTime.fromMillisecondsSinceEpoch(transaction.createdAt.millisecondsSinceEpoch)) == DateFormat('dd-MM-yyyy').format(DateTime.now())){
                         count++;
-                        // print("before transaction $count :");
-                        // print("total added cash: ${amountController.totalAddedCash}");
-                        // print("total withdraw cash: ${amountController.totalWithdrawCash}");
-                        // print("total added card: ${amountController.totalAddedCard}");
-                        // print("total withdraw card: ${amountController.totalWithdrawCard}");
                         setAmounts(transaction);
-                        // print("after transaction $count :");
-                        // print("total added cash: ${amountController.totalAddedCash}");
-                        // print("total withdraw cash: ${amountController.totalWithdrawCash}");
-                        // print("total added card: ${amountController.totalAddedCard}");
-                        // print("total withdraw card: ${amountController.totalWithdrawCard}\n\n");
-
-
-                        // print("before transaction $count :");
-                        // // setAmounts(transaction);
-                        // print("after transaction $count :");
 
 
 
@@ -194,7 +152,7 @@ class _HomeScreenState extends State<HomeScreen> {
                     children: [
                       Expanded(
                           child: amountContainer(
-                            "Total Amount (Cash)",
+                            "Cash",
                             amountController.totalAmountCash.toString(),
                             amountController.totalAddedCash.toString(),
                             amountController.totalWithdrawCash
@@ -205,12 +163,23 @@ class _HomeScreenState extends State<HomeScreen> {
                       ),
                       Expanded(
                           child: amountContainer(
-                            "Total Amount (Card)",
+                            "Card",
                             amountController.totalAmountCard.toString(),
                             amountController.totalAddedCard.toString(),
                             amountController.totalWithdrawCard
                                 .toString(),
                           )),
+                      const SizedBox(
+                        width: 15,
+                      ),
+                      Expanded(
+                          child: amountContainer(
+                            "Bank",
+                            amountController.totalAmountBank.toString(),
+                            amountController.totalAddedBank.toString(),
+                            amountController.totalWithdrawBank
+                                .toString(),
+                          ))
                     ],
                   );
                 }
@@ -229,11 +198,11 @@ class _HomeScreenState extends State<HomeScreen> {
               height: 10,
             ),
             Expanded(
-              child: StreamBuilder(
-                  stream: FirebaseFirestore.instance
+              child: FutureBuilder(
+                  future: FirebaseFirestore.instance
                       .collection(Collections.transactions)
                       .orderBy("createdAt", descending: true)
-                      .snapshots(),
+                      .get(),
                   builder: (context,
                       AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
                           snapshot) {
@@ -266,64 +235,30 @@ class _HomeScreenState extends State<HomeScreen> {
                         cacheExtent: isAdmin ? null : 2000,
                         itemCount: isAdmin ? snapshot.data!.size : snapshot.data!.size,
                         itemBuilder: (context, index) {
-                          // print("index $index");
-
-                          // print("user count = $userCount");
-
-                          // if (!isAdmin){
-                          //   userCount=userCount-1;
-                          // }
-
-                          // if (!isAdmin && userCount<=0){
-                          //   // print("user did not pass, user count : $userCount");
-                          //   return const SizedBox();
-                          // }
-
-                          // print("user passed, user count : $userCount");
-
 
                           TransactionModel transaction =
                               TransactionModel.fromMap(
                                   snapshot.data!.docs[index].data());
 
-                          // print(DateTime.fromMillisecondsSinceEpoch(transaction.createdAt.millisecondsSinceEpoch));
 
 
                           if ((!isAdmin) &&
                               (transaction.createdBy.id !=
                                   FirebaseAuth.instance.currentUser!.uid)) {
-                            // print("passed but user getting rejected due to id match ${
-                            //   DateTime.fromMillisecondsSinceEpoch(
-                            //       transaction.createdAt.millisecondsSinceEpoch)
-                            // }");
 
                             return const SizedBox();
 
                           }
 
                           if(DateFormat('dd-MM-yyyy').format(DateTime.fromMillisecondsSinceEpoch(transaction.createdAt.millisecondsSinceEpoch)) != DateFormat('dd-MM-yyyy').format(DateTime.now())){
-                            // print("passed but user getting rejected due to day match ${
-                            //     DateTime.fromMillisecondsSinceEpoch(
-                            //         transaction.createdAt.millisecondsSinceEpoch)
-                            // }");
                             return SizedBox();
                           }
 
-                          // print("succes returning : ${
-                          //     DateTime.fromMillisecondsSinceEpoch(
-                          //         transaction.createdAt.millisecondsSinceEpoch)
-                          // }");
-
                           if(!isAdmin && userCount>9){
-                            print("user count: $userCount");
-                            print("returning sized box, ${DateTime.fromMillisecondsSinceEpoch(transaction.createdAt.millisecondsSinceEpoch)}");
-                            // print();
                             return SizedBox();
                           }
 
                           if(!isAdmin){
-                            print("user count: $userCount");
-                            print("returning card ${DateTime.fromMillisecondsSinceEpoch(transaction.createdAt.millisecondsSinceEpoch)}");
                             userCount = userCount + 1;
                           }
 
@@ -332,85 +267,16 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           return TransactionCard(
                             transactionModel: transaction,
+                           onTransactionDelete: (){
+                              setState(() {
+
+                              });
+                           },
                           );
                         });
                   }),
             )
           ],
-        ),
-      ),
-    );
-  }
-
-  Widget amountContainer(
-      String title, String amount, String totalAdded, String totalWithdrawal) {
-    return SizedBox(
-      width: double.infinity,
-      child: Material(
-        elevation: 10,
-        child: Padding(
-          padding: const EdgeInsets.symmetric(vertical: 12.0),
-          child: Column(
-            mainAxisSize: MainAxisSize.min,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              Text(title,
-                  style: const TextStyle(
-                      color: Colors.black,
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold)),
-              const SizedBox(
-                height: 20,
-              ),
-              Text(
-                amount,
-                style: const TextStyle(
-                    color: Colors.blue,
-                    fontSize: 18,
-                    fontWeight: FontWeight.bold),
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-              Padding(
-                padding: const EdgeInsets.only(left: 8.0),
-                child: Column(
-                  mainAxisSize: MainAxisSize.min,
-                  children: [
-                    Row(
-                      children: [
-                        const Text("Total Added:       "),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          totalAdded,
-                          style: const TextStyle(
-                              color: Colors.green, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                    const SizedBox(
-                      height: 5,
-                    ),
-                    Row(
-                      children: [
-                        const Text("Total Withdrawn:"),
-                        const SizedBox(
-                          width: 10,
-                        ),
-                        Text(
-                          totalWithdrawal,
-                          style: const TextStyle(
-                              color: Colors.red, fontWeight: FontWeight.bold),
-                        ),
-                      ],
-                    ),
-                  ],
-                ),
-              ),
-            ],
-          ),
         ),
       ),
     );
@@ -427,6 +293,9 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Get.to(() => const AddMoneyScreen());
                     },
+                      onLongPress: (){
+                        Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '+'));
+                      },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -443,6 +312,10 @@ class _HomeScreenState extends State<HomeScreen> {
                     onPressed: () {
                       Get.to(() => SubtractMoneyScreen());
                     },
+                    onLongPress: (){
+                      Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '-'));
+                    },
+
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
@@ -485,7 +358,13 @@ class _HomeScreenState extends State<HomeScreen> {
       if (transaction.transactionType == 'cash') {
         amountController.totalAmountCash = transaction.amount + amountController.totalAmountCash;
         amountController.totalAddedCash = transaction.amount + amountController.totalAddedCash;
-      } else {
+      }
+      else if (transaction.transactionType=='bank'){
+        amountController.totalAmountBank = amountController.totalAmountBank + transaction.amount;
+        amountController.totalAddedBank = transaction.amount + amountController.totalAddedBank;
+      }
+
+      else {
         amountController.totalAmountCard = amountController.totalAmountCard + transaction.amount;
         amountController.totalAddedCard = transaction.amount + amountController.totalAddedCard;
       }
@@ -493,7 +372,14 @@ class _HomeScreenState extends State<HomeScreen> {
       if (transaction.transactionType == 'cash') {
         amountController.totalAmountCash = amountController.totalAmountCash - transaction.amount;
         amountController.totalWithdrawCash = transaction.amount + amountController.totalWithdrawCash;
-      } else {
+      }
+      else if (transaction.transactionType=='bank'){
+        amountController.totalAmountBank = amountController.totalAmountBank - transaction.amount;
+        amountController.totalWithdrawBank = transaction.amount + amountController.totalWithdrawBank;
+      }
+
+
+    else {
         amountController.totalAmountCard = amountController.totalAmountCard - transaction.amount;
         amountController.totalWithdrawCard = transaction.amount + amountController.totalWithdrawCard;
       }
@@ -502,3 +388,4 @@ class _HomeScreenState extends State<HomeScreen> {
 
 
 }
+

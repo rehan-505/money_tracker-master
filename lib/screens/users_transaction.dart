@@ -21,11 +21,10 @@ class UserTransactions extends StatelessWidget {
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: StreamBuilder(
-            stream: FirebaseFirestore.instance
+        child: FutureBuilder(
+            future: FirebaseFirestore.instance
                 .collection(Collections.transactions)
-                .orderBy("createdAt", descending: true)
-                .snapshots(),
+                .orderBy("createdAt", descending: true).get(),
             builder: (context,
                 AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
                 snapshot) {

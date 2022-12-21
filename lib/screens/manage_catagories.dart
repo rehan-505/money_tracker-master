@@ -8,7 +8,6 @@ import 'package:money_tracker/widgets/category_tile.dart';
 import 'package:uuid/uuid.dart';
 
 import '../utils/collection_names.dart';
-import 'package:flex_color_picker/flex_color_picker.dart';
 
 class ManageCategoriesScreen extends StatefulWidget {
   const ManageCategoriesScreen({Key? key}) : super(key: key);
@@ -133,9 +132,13 @@ class ReorderableCategoriesList extends StatefulWidget {
 }
 
 class _ReorderableCategoriesListState extends State<ReorderableCategoriesList> {
+
+  List<CategoryModel> savedCategories = [];
+
   @override
   Widget build(BuildContext context) {
     return ReorderableList(
+
       shrinkWrap: true,
       itemCount: widget.categories.length ,
       itemBuilder: (context, index) {
@@ -146,16 +149,41 @@ class _ReorderableCategoriesListState extends State<ReorderableCategoriesList> {
       // CategoryModel categoryModel = widget.categories.removeAt(oldIndex);
       // widget.categories.insert( newIndex > oldIndex ?   newIndex-1 : newIndex, categoryModel);
 
+      savedCategories = widget.categories;
 
-      FirebaseFirestore.instance.collection('categories').doc(widget.categories[oldIndex].uid).update({
-        'index' : newIndex
-      });
+      if(newIndex < oldIndex){
 
-      FirebaseFirestore.instance.collection('categories').doc(widget.categories[newIndex].uid).update({
-        'index' : oldIndex
-      });
+        print("old index is $oldIndex");
+        print("new index is $newIndex");
+
+
+        // await FirebaseFirestore.instance.collection('categories').doc(savedCategories[oldIndex].uid).update({
+        //   'index' : newIndex
+        // });
+        // //
+        // await FirebaseFirestore.instance.collection('categories').doc(savedCategories[newIndex].uid).update({
+        //   'index' : oldIndex
+        // });
+      }
+      else{
+
+        newIndex = newIndex - 1;
+
+        print("old index is $oldIndex");
+        print("new index is $newIndex");
+
+
+        // await FirebaseFirestore.instance.collection('categories').doc(savedCategories[oldIndex].uid).update({
+        //   'index' : newIndex
+        // });
+        //
+        // await FirebaseFirestore.instance.collection('categories').doc(savedCategories[newIndex].uid).update({
+        //   'index' : oldIndex
+        // });
+
+
+      }
 
     },);
   }
 }
-

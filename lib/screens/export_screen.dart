@@ -39,7 +39,10 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
 
   DateTime? selectedStartDate;
   DateTime? selectedEndDate;
-  String selectedCategory = "All";
+  String selectedCategory = "All Categories";
+
+  String selectedPaymentMode = 'All Payment Modes';
+
 
   final TransactionScreenAmountController amountController =
   TransactionScreenAmountController();
@@ -150,10 +153,10 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               const SizedBox(
                 height: 20,
               ),
-              StreamBuilder(
-                  stream: FirebaseFirestore.instance
+              FutureBuilder(
+                  future: FirebaseFirestore.instance
                       .collection(Collections.categories)
-                      .snapshots(),
+                      .get(),
                   builder: (context,
                       AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
                           snapshot) {
@@ -168,7 +171,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
                                   document) =>
                               CategoryModel.fromMap(document.data()!).title)
                           .toList();
-                      categories.insert(0, "All");
+                      categories.insert(0, "All Categories");
 
                       for (var snapshot in snapshot.data!.docs) {
 
@@ -191,6 +194,23 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
               const SizedBox(
                 height: 20,
               ),
+              MyDropDownButton(
+                dropdownValue: selectedPaymentMode,
+                items: const [
+                  'All Payment Modes',
+                  'cash',
+                  'card',
+                  'bank'
+                ],
+                function: (String v) {
+                  selectedPaymentMode = v;
+                },
+                hintText: "Select Payment Mode",
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+
               // buttonsRow(),
               // const SizedBox(height: 30),
               SizedBox(height: pdfPath==null ? 30 : 0,),
@@ -241,7 +261,10 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
         .collection(Collections.transactions)
         .where("createdAt",
             isGreaterThanOrEqualTo: selectedStartDate,
-            isLessThanOrEqualTo: selectedEndDate)
+            isLessThanOrEqualTo: selectedEndDate,
+
+
+    )
         .orderBy("createdAt", descending: true)
         .get();
     transactionsList = querySnapshot.docs
@@ -371,9 +394,16 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
 
     await fillTransactionsList();
 
-    if(selectedCategory.toLowerCase()!='all'){
+    if(selectedCategory.toLowerCase()!='all categories'){
       transactionsList.removeWhere((TransactionModel transactionModel) => transactionModel.category!=selectedCategory);
     }
+
+    if(selectedPaymentMode.toLowerCase()!='all payment modes'){
+      transactionsList.removeWhere((TransactionModel transactionModel) => transactionModel.transactionType!=selectedPaymentMode);
+    }
+
+
+
 
     for(int i=0; i<transactionsList.length; i++){
       setAmounts(transactionsList[i]);

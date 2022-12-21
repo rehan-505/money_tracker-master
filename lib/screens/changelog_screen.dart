@@ -18,10 +18,10 @@ class ChangeLogScreen extends StatelessWidget {
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(title: Text("Change Logs"),),
-      body: StreamBuilder(
-          stream: FirebaseFirestore.instance
+      body: FutureBuilder(
+          future: FirebaseFirestore.instance
               .collection('changeLogs').orderBy("createdAt", descending: true)
-              .snapshots(),
+              .get(),
           builder: (context,
               AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
               snapshot) {

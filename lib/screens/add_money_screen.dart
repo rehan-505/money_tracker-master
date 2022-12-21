@@ -126,8 +126,8 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                   height: 15,
                 ),
 
-                StreamBuilder(
-                  stream: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').snapshots(),
+                FutureBuilder(
+                  future: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').get(),
                   builder: (context,AsyncSnapshot<QuerySnapshot<Map<String,dynamic>>> snapshot) {
 
                     final Map<String,Color> colorsMap = {};
@@ -155,8 +155,7 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                 ),
 
 
-
-                MyDropDownButton(dropdownValue: selectedPaymentMode, items: const ["cash","card"], function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
+                MyDropDownButton(dropdownValue: selectedPaymentMode, items: const ["cash","card","bank"], function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
 
                 const SizedBox(
                   height: 15,

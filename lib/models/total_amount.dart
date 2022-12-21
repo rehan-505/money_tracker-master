@@ -1,10 +1,15 @@
 class TotalAmount{
   final double cash;
+  final double cashAllTimeAdded;
+  final double cashAllTimeWithdraw;
+
   final double card;
   final double cardAllTimeAdded;
   final double cardAllTimeWithdraw;
-  final double cashAllTimeAdded;
-  final double cashAllTimeWithdraw;
+
+  final double bank;
+  final double bankAllTimeAdded;
+  final double bankAllTimeWithdraw;
 
 
   Map<String, dynamic> toMap() {
@@ -15,6 +20,11 @@ class TotalAmount{
       'cardAllTimeWithdraw': cardAllTimeWithdraw,
       'cashAllTimeAdded': cashAllTimeAdded,
       'cashAllTimeWithdraw': cashAllTimeWithdraw,
+
+      'bank': bank,
+      'bankAllTimeAdded': bankAllTimeAdded,
+      'bankAllTimeWithdraw': bankAllTimeWithdraw
+
     };
   }
 
@@ -26,6 +36,11 @@ class TotalAmount{
       cardAllTimeWithdraw: map['cardAllTimeWithdraw'] as double,
       cashAllTimeAdded: map['cashAllTimeAdded'] as double,
       cashAllTimeWithdraw: map['cashAllTimeWithdraw'] as double,
+      bank: map['bank'] as double,
+      bankAllTimeAdded: map['bankAllTimeAdded'] as double,
+      bankAllTimeWithdraw: map['bankAllTimeWithdraw'] as double,
+
+
     );
   }
 
@@ -36,5 +51,8 @@ class TotalAmount{
     required this.cardAllTimeWithdraw,
     required this.cashAllTimeAdded,
     required this.cashAllTimeWithdraw,
+    required this.bank,
+    required this.bankAllTimeAdded,
+    required this.bankAllTimeWithdraw
   });
 }

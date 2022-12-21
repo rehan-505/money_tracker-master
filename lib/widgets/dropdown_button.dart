@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 
+
 class MyDropDownButton extends StatefulWidget {
   String? dropdownValue;
   final List<String> items;
@@ -18,6 +19,7 @@ class MyDropDownButton extends StatefulWidget {
 
 class _MyDropDownButtonState extends State<MyDropDownButton> {
   // String dropdownValue = widget.dropdownValue;
+
 
   @override
   Widget build(BuildContext context) {
@@ -59,7 +61,7 @@ class _MyDropDownButtonState extends State<MyDropDownButton> {
               padding: const EdgeInsets.only(top: 6.0),
               child: Text(
                 value,
-                style:  TextStyle(color: widget.colorsMap[value] ?? ((value == 'cash') ? Colors.green : value == 'card' ? Colors.blue : Colors.black)),
+                style:  TextStyle(color: widget.colorsMap[value] ?? ((value == 'cash') ? Colors.green : value == 'card' ? Colors.blue : Colors.pink)),
               ),
             ),
           );

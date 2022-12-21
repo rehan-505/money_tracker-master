@@ -5,8 +5,9 @@ import 'package:get/get_navigation/src/root/get_material_app.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker/screens/contact_developer.dart';
 import 'package:money_tracker/screens/home_screen.dart';
-import 'package:money_tracker/screens/login_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:money_tracker/screens/login_screen.dart';
+import 'package:money_tracker/screens/signup_screen.dart';
 import 'package:money_tracker/utils/db_operations.dart';
 import 'package:permission_handler/permission_handler.dart';
 

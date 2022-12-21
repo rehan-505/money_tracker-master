@@ -153,10 +153,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                           child: amountContainer(
                             "Cash",
-                            amountController.totalAmountCash.toString(),
-                            amountController.totalAddedCash.toString(),
+                            amountController.totalAmountCash,
+                            amountController.totalAddedCash,
                             amountController.totalWithdrawCash
-                                .toString(),
+                            ,
                           )),
                       const SizedBox(
                         width: 15,
@@ -164,10 +164,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                           child: amountContainer(
                             "Card",
-                            amountController.totalAmountCard.toString(),
-                            amountController.totalAddedCard.toString(),
+                            amountController.totalAmountCard,
+                            amountController.totalAddedCard,
                             amountController.totalWithdrawCard
-                                .toString(),
+                            ,
                           )),
                       const SizedBox(
                         width: 15,
@@ -175,10 +175,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       Expanded(
                           child: amountContainer(
                             "Bank",
-                            amountController.totalAmountBank.toString(),
-                            amountController.totalAddedBank.toString(),
+                            amountController.totalAmountBank,
+                            amountController.totalAddedBank,
                             amountController.totalWithdrawBank
-                                .toString(),
+                            ,
                           ))
                     ],
                   );
@@ -294,7 +294,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Get.to(() => const AddMoneyScreen());
                     },
                       onLongPress: (){
-                        Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '+'));
+                        // Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '+'));
                       },
                     child: Row(
                       mainAxisSize: MainAxisSize.min,
@@ -313,7 +313,7 @@ class _HomeScreenState extends State<HomeScreen> {
                       Get.to(() => SubtractMoneyScreen());
                     },
                     onLongPress: (){
-                      Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '-'));
+                      // Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '-'));
                     },
 
                     child: Row(

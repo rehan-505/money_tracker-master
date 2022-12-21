@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 
 Widget amountContainer(
-    String title, String amount, String totalAdded, String totalWithdrawal) {
+    String title, double amount, double totalAdded, double totalWithdrawal) {
   return SizedBox(
     width: double.infinity,
     child: Material(
@@ -22,7 +22,7 @@ Widget amountContainer(
               height: 20,
             ),
             Text(
-              amount,
+              amount.toStringAsFixed(1),
               style: const TextStyle(
                   color: Colors.blue,
                   fontSize: 18,
@@ -48,7 +48,7 @@ Widget amountContainer(
                         width: 10,
                       ),
                       Text(
-                        totalAdded,
+                        totalAdded.toStringAsFixed(1),
                         style: const TextStyle(
                             color: Colors.green, fontWeight: FontWeight.bold,
                             fontSize: 12
@@ -72,7 +72,7 @@ Widget amountContainer(
                         width: 10,
                       ),
                       Text(
-                        totalWithdrawal,
+                        totalWithdrawal.toStringAsFixed(1),
                         style: const TextStyle(
                             color: Colors.red, fontWeight: FontWeight.bold,
                             fontSize: 12
@@ -89,5 +89,3 @@ Widget amountContainer(
     ),
   );
 }
-
-

@@ -102,10 +102,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       Expanded(
                           child: amountContainer(
                             "Cash",
-                            amountController.totalAmountCash.toString(),
-                            amountController.totalAddedCash.toString(),
+                            amountController.totalAmountCash,
+                            amountController.totalAddedCash,
                             amountController.totalWithdrawCash
-                                .toString(),
+                            ,
                           )),
                       const SizedBox(
                         width: 15,
@@ -113,10 +113,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       Expanded(
                           child: amountContainer(
                             "Card",
-                            amountController.totalAmountCard.toString(),
-                            amountController.totalAddedCard.toString(),
+                            amountController.totalAmountCard,
+                            amountController.totalAddedCard,
                             amountController.totalWithdrawCard
-                                .toString(),
+                            ,
                           )),
                       const SizedBox(
                         width: 15,
@@ -124,10 +124,10 @@ class _SearchScreenState extends State<SearchScreen> {
                       Expanded(
                           child: amountContainer(
                             "Bank",
-                            amountController.totalAmountBank.toString(),
-                            amountController.totalAddedBank.toString(),
+                            amountController.totalAmountBank,
+                            amountController.totalAddedBank,
                             amountController.totalWithdrawBank
-                                .toString(),
+                            ,
                           ))
                     ],
                   );

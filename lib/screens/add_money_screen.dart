@@ -6,6 +6,7 @@ import 'package:money_tracker/models/user.dart';
 import 'package:money_tracker/utils/collection_names.dart';
 import 'package:money_tracker/utils/db_operations.dart';
 import 'package:money_tracker/utils/global_constants.dart';
+import 'package:money_tracker/utils/global_functions.dart';
 import 'package:money_tracker/widgets/dropdown_button.dart';
 import 'package:uuid/uuid.dart';
 import '../models/category.dart';
@@ -131,22 +132,23 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                   builder: (context,AsyncSnapshot<QuerySnapshot<Map<String,dynamic>>> snapshot) {
 
                     final Map<String,Color> colorsMap = {};
-                    List<String> categories = [];
+                    List<String> stringCategories = [];
                     if((snapshot.hasData) && (!(snapshot.connectionState==ConnectionState.waiting))){
-                      categories = snapshot.data!.docs.map((DocumentSnapshot<Map<String,dynamic>> document) => CategoryModel.fromMap(document.data()!).title ).toList();
+                      List<CategoryModel> categories = snapshot.data!.docs.map((DocumentSnapshot<Map<String,dynamic>> document) => CategoryModel.fromMap(document.data()!) ).toList();
+                      categories = reorderList(categories);
+                      stringCategories = categories.map((c) => c.title ).toList();
 
 
-                      for (var snapshot in snapshot.data!.docs) {
+                      for (var category in categories) {
 
-                        CategoryModel model = CategoryModel.fromMap(snapshot.data());
-                        colorsMap[model.title] = Color(model.colorCode).withOpacity(1);
+                        colorsMap[category.title] = Color(category.colorCode).withOpacity(1);
                       }
 
                     }
 
 
 
-                    return MyDropDownButton(dropdownValue: selectedCategory, items: categories, function: (String v) { selectedCategory=v; }, hintText: "Select Category",colorsMap: colorsMap,);
+                    return MyDropDownButton(dropdownValue: selectedCategory, items: stringCategories, function: (String v) { selectedCategory=v; }, hintText: "Select Category",colorsMap: colorsMap,);
                   }
                 ),
 

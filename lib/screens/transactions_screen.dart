@@ -336,54 +336,32 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 height: 10,
               ),
 
-              StreamBuilder(
-                  stream: FirebaseFirestore.instance
-                      .collection(Collections.categories)
-                      .orderBy('createdAt')
-                      .snapshots(),
-                  builder: (context,
-                      AsyncSnapshot<
-                          QuerySnapshot<
-                              Map<String, dynamic>>>
-                      snapshot) {
-                    List<String> categories = [];
+              FutureBuilder(
+                  future: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').get(),
+                  builder: (context,AsyncSnapshot<QuerySnapshot<Map<String,dynamic>>> snapshot) {
 
-                    final Map<String, Color> colorsMap = {};
+                    final Map<String,Color> colorsMap = {};
+                    List<String> stringCategories = [];
+                    if((snapshot.hasData) && (!(snapshot.connectionState==ConnectionState.waiting))){
+                      List<CategoryModel> categories = snapshot.data!.docs.map((DocumentSnapshot<Map<String,dynamic>> document) => CategoryModel.fromMap(document.data()!) ).toList();
+                      categories = reorderList(categories);
+                      stringCategories = categories.map((c) => c.title ).toList();
+                      stringCategories.insert(0, "All Categories");
 
-                    if ((snapshot.hasData) &&
-                        (!(snapshot.connectionState ==
-                            ConnectionState.waiting))) {
-                      categories = snapshot.data!.docs
-                          .map((DocumentSnapshot<
-                          Map<String, dynamic>>
-                      document) =>
-                      CategoryModel.fromMap(
-                          document.data()!)
-                          .title)
-                          .toList();
-                      categories.insert(0, "All Categories");
 
-                      for (var snapshot
-                      in snapshot.data!.docs) {
-                        CategoryModel model =
-                        CategoryModel.fromMap(
-                            snapshot.data());
-                        colorsMap[model.title] =
-                            Color(model.colorCode)
-                                .withOpacity(1);
+
+                      for (var category in categories) {
+
+                        colorsMap[category.title] = Color(category.colorCode).withOpacity(1);
                       }
+
                     }
 
-                    return MyDropDownButton(
-                      dropdownValue: selectedCategory,
-                      items: categories,
-                      function: (String v) {
-                        selectedCategory = v;
-                      },
-                      hintText: "Select Category",
-                      colorsMap: colorsMap,
-                    );
-                  }),
+
+
+                    return MyDropDownButton(dropdownValue: selectedCategory, items: stringCategories, function: (String v) { selectedCategory=v; }, hintText: "Select Category",colorsMap: colorsMap,);
+                  }
+              ),
               const SizedBox(
                 height: 10,
               ),

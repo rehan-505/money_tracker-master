@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../main.dart';
+import '../models/category.dart';
+
+
+///build
 Widget amountContainer(
     String title, double amount, double totalAdded, double totalWithdrawal) {
   return SizedBox(
@@ -88,4 +93,26 @@ Widget amountContainer(
       ),
     ),
   );
+}
+
+///order the category list according to globalMapCategoryOrder
+List<CategoryModel> reorderList(List<CategoryModel> categoriesList){
+
+  if(categoriesList.isEmpty){
+    return categoriesList;
+  }
+
+  Map<String,CategoryModel> categoryAndIdMap = {};
+  for (var element in categoriesList) {
+    categoryAndIdMap[element.uid] = element;
+  }
+
+  List<CategoryModel> orderCategories = categoriesList;
+
+  for (var index in categoryOrderMapGlobal.keys) {
+    orderCategories[int.parse(index)] = categoryAndIdMap[categoryOrderMapGlobal[index]]!;
+  }
+
+  return orderCategories;
+
 }

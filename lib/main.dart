@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,6 @@ import 'package:money_tracker/screens/contact_developer.dart';
 import 'package:money_tracker/screens/home_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:money_tracker/screens/login_screen.dart';
-import 'package:money_tracker/screens/signup_screen.dart';
 import 'package:money_tracker/utils/db_operations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -19,7 +19,12 @@ Future<void> backgroundHandler(RemoteMessage message) async {
   print(message.notification!.title);
 }
 
+Map<String, dynamic> categoryOrderMapGlobal = {};
+
 void main() async{
+
+
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(backgroundHandler);
@@ -34,6 +39,17 @@ void main() async{
 
 
   await DBOperations.initializeTotalAmountCollection();
+
+
+  ///getting categoryOrderDocument
+
+  DocumentSnapshot<Map<String,dynamic>> documentSnapshot = await FirebaseFirestore.instance.collection('categories_order').doc('doc_order').get();
+  categoryOrderMapGlobal = documentSnapshot.data() ?? {};
+  print("category order map global:");
+  print(categoryOrderMapGlobal);
+  print("in main, categoryOrderMap keys length:${categoryOrderMapGlobal.keys.length}");
+
+
   // await DBOperations.getCurrentUser();
 
   runApp(const MyApp());

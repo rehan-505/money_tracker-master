@@ -61,7 +61,7 @@ class CustomDrawer extends StatelessWidget {
                   title: const Text('Categories'),
                   onTap: () {
                     Get.back();
-                    Get.to(const ManageCategoriesScreen());
+                    Get.to( ManageCategoriesScreen());
                   },
                 )
               : SizedBox(),

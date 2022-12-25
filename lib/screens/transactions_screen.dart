@@ -8,7 +8,6 @@ import 'package:money_tracker/screens/search_screen.dart';
 import 'package:money_tracker/utils/collection_names.dart';
 import 'package:money_tracker/widgets/transaction_card.dart';
 import '../controllers/transaction_screen_amount_controller.dart';
-import '../utils/global_constants.dart';
 import '../models/category.dart';
 import '../utils/global_functions.dart';
 import '../widgets/dropdown_button.dart';
@@ -107,7 +106,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                 }
 
                 return ListView.builder(
-                    itemCount: isAdmin ? snapshot.data!.size : 10,
+                    itemCount: (snapshot.data!.size)+1,
                     itemBuilder: (context, index) {
 
                       if(index==0){
@@ -116,17 +115,8 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
                       TransactionModel transaction =
                       TransactionModel.fromMap(
-                          snapshot.data!.docs[index].data());
-                      if (((transaction.category == selectedCategory) ||
-                          selectedCategory.toLowerCase() ==
-                              'all categories') &&
-                          ((transaction.transactionType ==
-                              selectedPaymentMode) ||
-                              selectedPaymentMode!.toLowerCase() ==
-                                  'all payment modes')
-                          && (transaction.desc.toLowerCase().contains(searchController.text.toLowerCase()) || transaction.category.toLowerCase().contains(searchController.text.toLowerCase()))
-                      && (transaction.transactionSign == selectedSign || selectedSign == 'both' )
-                      ) {
+                          snapshot.data!.docs[index-1].data());
+                      if (matchFilters(transaction)  ) {
                         // setAmounts(transaction);
 
                         return TransactionCard(
@@ -433,15 +423,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     if(snapshot.hasData && (!(snapshot.connectionState==ConnectionState.waiting)) ){
                       for(int i=0; i< snapshot.data!.docs.length; i++){
                         TransactionModel transaction = TransactionModel.fromMap(snapshot.data!.docs[i].data());
-                        if (((transaction.category == selectedCategory) ||
-                            selectedCategory.toLowerCase() ==
-                                'all categories') &&
-                            ((transaction.transactionType ==
-                                selectedPaymentMode) ||
-                                selectedPaymentMode!.toLowerCase() ==
-                                    'all payment modes')
-                            && (transaction.desc.toLowerCase().contains(searchController.text.toLowerCase()) || transaction.category.toLowerCase().contains(searchController.text.toLowerCase()))
-                        ){
+                        if (           matchFilters(transaction)             ){
                           setAmounts(transaction);
 
                         }
@@ -556,5 +538,17 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
       ],
     );
+  }
+
+  bool matchFilters(TransactionModel transaction){
+    return ((transaction.category == selectedCategory) ||
+        selectedCategory.toLowerCase() ==
+            'all categories') &&
+        ((transaction.transactionType ==
+            selectedPaymentMode) ||
+            selectedPaymentMode!.toLowerCase() ==
+                'all payment modes')
+        && (transaction.desc.toLowerCase().contains(searchController.text.toLowerCase()) || transaction.category.toLowerCase().contains(searchController.text.toLowerCase()))
+        && (transaction.transactionSign == selectedSign || selectedSign == 'both' );
   }
 }

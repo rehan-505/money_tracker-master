@@ -25,7 +25,7 @@ class _MyDropDownButtonState extends State<MyDropDownButton> {
   Widget build(BuildContext context) {
     return Container(
       color: Colors.grey.withOpacity(0.2),
-      padding: EdgeInsets.symmetric(horizontal: 16),
+      padding: const EdgeInsets.symmetric(horizontal: 16),
       child: DropdownButton<String>(
         hint: Text(widget.hintText),
         isExpanded: true,
@@ -61,7 +61,7 @@ class _MyDropDownButtonState extends State<MyDropDownButton> {
               padding: const EdgeInsets.only(top: 6.0),
               child: Text(
                 value,
-                style:  TextStyle(color: widget.colorsMap[value] ?? ((value == 'cash') ? Colors.green : value == 'card' ? Colors.blue : Colors.pink)),
+                style:  TextStyle(color: widget.colorsMap[value] ?? ((value == 'cash') ? Colors.green : value == 'card' ? Colors.blue : Colors.pink),fontSize: 20),
               ),
             ),
           );
@@ -70,4 +70,5 @@ class _MyDropDownButtonState extends State<MyDropDownButton> {
     );
   }
 }
+
 

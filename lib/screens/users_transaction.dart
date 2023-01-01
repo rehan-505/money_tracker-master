@@ -1,4 +1,5 @@
 import 'package:flutter/material.dart';
+import 'package:intl/intl.dart';
 import 'package:money_tracker/models/user.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:money_tracker/models/transaction.dart';
@@ -7,167 +8,202 @@ import 'package:money_tracker/widgets/transaction_card.dart';
 import '../utils/global_constants.dart';
 
 
-class UserTransactions extends StatelessWidget {
+class UserTransactions extends StatefulWidget {
   const UserTransactions({Key? key, required this.appUser}) : super(key: key);
 
   final AppUser appUser;
 
+  @override
+  State<UserTransactions> createState() => _UserTransactionsState();
+}
+
+class _UserTransactionsState extends State<UserTransactions> {
+  DateTime? selectedStartDate;
+
+  DateTime? selectedEndDate;
+
+  final TextEditingController startTimeController = TextEditingController();
+
+  final TextEditingController endTimeController = TextEditingController();
+  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
 
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(appUser.name),
+        title: Text(widget.appUser.name),
       ),
       body: Padding(
         padding: const EdgeInsets.all(20.0),
-        child: FutureBuilder(
-            future: FirebaseFirestore.instance
-                .collection(Collections.transactions)
-                .orderBy("createdAt", descending: true).get(),
-            builder: (context,
-                AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
-                snapshot) {
-              if (!snapshot.hasData) {
-                return const Center(
-                  child: Text("No Transactions to show"),
-                );
-              }
-              if (snapshot.connectionState == ConnectionState.waiting) {
-                return const Center(
-                  child: Text("Loading Transactions"),
-                );
-              }
+        child: Column(
+          children: [
+            Form(
+              key: formKey,
+              child: Row(
+                children: [
+                  Expanded(
+                      child: TextFormField(
+                        controller: startTimeController,
+                        onTap: () async {
+                          selectedStartDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2025));
+                          if (selectedStartDate != null) {
+                            startTimeController.text =
+                                DateFormat("dd-MM-yyyy")
+                                    .format(selectedStartDate!)
+                                    .toString();
+                            // setState(() {});
+                          }
+                        },
 
-              if (snapshot.data!.docs.isEmpty) {
-                return const Center(
-                  child: Text("No Transactions to show"),
-                );
-              }
+                        validator: (value) {
+                          if (selectedStartDate == null) {
+                            return "field is required";
+                          }
+                          return null;
+                        },
 
+                        decoration: const InputDecoration(
+                            labelText: "Start Date",
+                            hintText: "Start Date",
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(),
+                            disabledBorder: OutlineInputBorder(),
+                            enabledBorder: OutlineInputBorder(),
+                            isDense: true),
+                        maxLines: 1,
+                        readOnly: true,
+                        // enabled: false,
+                      )),
+                  const SizedBox(
+                    width: 20,
+                  ),
+                  Expanded(
+                      child: TextFormField(
+                        controller: endTimeController,
+                        onTap: () async {
+                          selectedEndDate = await showDatePicker(
+                              context: context,
+                              initialDate: DateTime.now(),
+                              firstDate: DateTime(2020),
+                              lastDate: DateTime(2025));
+                          if (selectedEndDate != null) {
+                            endTimeController.text =
+                                DateFormat("dd-MM-yyyy")
+                                    .format(selectedEndDate!)
+                                    .toString();
+                            // setState(() {});
+                          }
+                        },
 
-              return ListView.builder(
-                  itemCount: isAdmin ? snapshot.data!.size : 10,
-                  itemBuilder: (context, index) {
+                        validator: (value) {
+                          if (selectedEndDate == null) {
+                            return "field is required";
+                          }
+                          return null;
+                        },
 
-                    TransactionModel transaction = TransactionModel.fromMap(
-                        snapshot.data!.docs[index].data());
-                    if(transaction.createdBy.id!=appUser.id){
-                      return SizedBox();
-                    }
+                        decoration: const InputDecoration(
+                            labelText: "End Date",
+                            hintText: "End Date",
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(),
+                            disabledBorder: OutlineInputBorder(),
+                            enabledBorder: OutlineInputBorder(),
+                            isDense: true),
+                        maxLines: 1,
+                        readOnly: true,
+                        // enabled: false,
+                      ))
+                ],
+              ),
+            ),
+            Row(
+              children: [
+                Expanded(
+                    child: ElevatedButton(
+                        onPressed: () {
+                          if (formKey.currentState!.validate()) {
+                            setState(() {});
 
-                    return TransactionCard(transactionModel: transaction);
-
+                          }
+                          },
+                        child: const Text("Apply"))),
+                const SizedBox(
+                  width: 15,
+                ),
+                Expanded(
+                  child: ElevatedButton(
+                      onPressed: () {
+                        selectedEndDate = null;
+                        selectedStartDate = null;
+                        startTimeController.text = '';
+                        endTimeController.text = '';
+                        setState(() {});
+                      },
+                      child: const Text("Reset")),
+                )
+              ],
+            ),
+            FutureBuilder(
+                future: (selectedStartDate == null || selectedEndDate == null)
+                    ? FirebaseFirestore.instance
+                    .collection(Collections.transactions)
+                    .orderBy("createdAt", descending: true)
+                    .get()
+                    : FirebaseFirestore.instance
+                    .collection(Collections.transactions)
+                    .where("createdAt",
+                    isGreaterThanOrEqualTo: selectedStartDate,
+                    isLessThanOrEqualTo: selectedEndDate)
+                    .orderBy("createdAt", descending: true)
+                    .get(),
+                builder: (context,
+                    AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
+                    snapshot) {
+                  if (!snapshot.hasData) {
+                    return const Center(
+                      child: Text("No Transactions to show"),
+                    );
+                  }
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Center(
+                      child: Text("Loading Transactions"),
+                    );
                   }
 
-              );
-            }),
+                  if (snapshot.data!.docs.isEmpty) {
+                    return const Center(
+                      child: Text("No Transactions to show"),
+                    );
+                  }
+
+
+                  return Expanded(
+                    child: ListView.builder(
+                        itemCount: isAdmin ? snapshot.data!.size : 10,
+                        itemBuilder: (context, index) {
+
+                          TransactionModel transaction = TransactionModel.fromMap(
+                              snapshot.data!.docs[index].data());
+                          if(transaction.createdBy.id!=widget.appUser.id){
+                            return const SizedBox();
+                          }
+
+
+                          return TransactionCard(transactionModel: transaction);
+
+                        }
+
+                    ),
+                  );
+                }),
+          ],
+        ),
       ),
     );
   }
-
-  // void setAmounts(TransactionModel transaction) {
-  //   if (transaction.transactionSign == '+') {
-  //     if (transaction.transactionType == 'cash') {
-  //       amountController.totalAmountCash =
-  //           transaction.amount + amountController.totalAmountCash;
-  //       amountController.totalAddedCash =
-  //           transaction.amount + amountController.totalAddedCash;
-  //     } else {
-  //       amountController.totalAmountCard =
-  //           amountController.totalAmountCard + transaction.amount;
-  //       amountController.totalAddedCard =
-  //           transaction.amount + amountController.totalAddedCard;
-  //     }
-  //   } else if (transaction.transactionSign == '-') {
-  //     if (transaction.transactionType == 'cash') {
-  //       amountController.totalAmountCash =
-  //           amountController.totalAmountCash - transaction.amount;
-  //       amountController.totalWithdrawCash =
-  //           transaction.amount + amountController.totalWithdrawCash;
-  //     } else {
-  //       amountController.totalAmountCard =
-  //           amountController.totalAmountCard - transaction.amount;
-  //       amountController.totalWithdrawCard =
-  //           transaction.amount + amountController.totalWithdrawCard;
-  //     }
-  //   }
-  // }
-  //
-  // Widget amountContainer(String title, String amount, String totalAdded, String totalWithdrawal) {
-  //   return SizedBox(
-  //     width: double.infinity,
-  //     child: Material(
-  //       elevation: 2,
-  //       child: Container(
-  //         color: Colors.grey.withOpacity(0.2),
-  //         child: Padding(
-  //           padding: const EdgeInsets.symmetric(vertical: 12.0),
-  //           child: Column(
-  //             mainAxisSize: MainAxisSize.min,
-  //             crossAxisAlignment: CrossAxisAlignment.center,
-  //             children: [
-  //               Text(title,
-  //                   style: const TextStyle(
-  //                       color: Colors.black,
-  //                       fontSize: 16,
-  //                       fontWeight: FontWeight.bold)),
-  //               // const SizedBox(
-  //               //   height: 20,
-  //               // ),
-  //               // Text(
-  //               //   amount,
-  //               //   style: const TextStyle(
-  //               //       color: Colors.blue,
-  //               //       fontSize: 18,
-  //               //       fontWeight: FontWeight.bold),
-  //               // ),
-  //               const SizedBox(
-  //                 height: 20,
-  //               ),
-  //               Padding(
-  //                 padding: const EdgeInsets.only(left: 8.0),
-  //                 child: Column(
-  //                   mainAxisSize: MainAxisSize.min,
-  //                   children: [
-  //                     Row(
-  //                       children: [
-  //                         const Text("Total Added:       "),
-  //                         const SizedBox(
-  //                           width: 10,
-  //                         ),
-  //                         Text(
-  //                           totalAdded,
-  //                           style: const TextStyle(
-  //                               color: Colors.green, fontWeight: FontWeight.bold),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                     const SizedBox(
-  //                       height: 5,
-  //                     ),
-  //                     Row(
-  //                       children: [
-  //                         const Text("Total Withdrawn:"),
-  //                         const SizedBox(
-  //                           width: 10,
-  //                         ),
-  //                         Text(
-  //                           totalWithdrawal,
-  //                           style: const TextStyle(
-  //                               color: Colors.red, fontWeight: FontWeight.bold),
-  //                         ),
-  //                       ],
-  //                     ),
-  //                   ],
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //         ),
-  //       ),
-  //     ),
-  //   );
-  // }
-
 }

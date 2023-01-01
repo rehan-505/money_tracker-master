@@ -25,8 +25,8 @@ class CustomDrawer extends StatelessWidget {
         padding: EdgeInsets.zero,
         children: [
           DrawerHeader(
-              decoration: const BoxDecoration(
-                color: Colors.blue,
+              decoration:  BoxDecoration(
+                color: Theme.of(context).primaryColor,
               ),
               child: Center(
                   child: Column(
@@ -61,7 +61,7 @@ class CustomDrawer extends StatelessWidget {
                   title: const Text('Categories'),
                   onTap: () {
                     Get.back();
-                    Get.to(const ManageCategoriesScreen());
+                    Get.to( ManageCategoriesScreen());
                   },
                 )
               : SizedBox(),

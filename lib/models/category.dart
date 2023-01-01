@@ -1,13 +1,13 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CategoryModel{
-  final String title;
+  String title;
   final String uid;
   final Timestamp createdAt;
-  final int colorCode;
+  int colorCode;
   final int index;
 
-  const CategoryModel( {
+   CategoryModel( {
     required this.index,
     required this.title,
     required this.uid,

@@ -1,5 +1,10 @@
 import 'package:flutter/material.dart';
 
+import '../main.dart';
+import '../models/category.dart';
+
+
+///build
 Widget amountContainer(
     String title, double amount, double totalAdded, double totalWithdrawal) {
   return SizedBox(
@@ -36,16 +41,16 @@ Widget amountContainer(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("Added:",
+                      const Text("Added",
 
                         style: TextStyle(fontSize: 12),
 
                       ),
                       const SizedBox(
-                        width: 10,
+                        height: 5,
                       ),
                       Text(
                         totalAdded.toStringAsFixed(1),
@@ -58,18 +63,17 @@ Widget amountContainer(
                     ],
                   ),
                   const SizedBox(
-                    height: 5,
+                    height: 8,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("Withdrawn:",
+                      const Text("Withdrawn",
                         style: TextStyle(fontSize: 12),
 
                       ),
                       const SizedBox(
-                        width: 10,
+                        height: 5,
                       ),
                       Text(
                         totalWithdrawal.toStringAsFixed(1),
@@ -88,4 +92,26 @@ Widget amountContainer(
       ),
     ),
   );
+}
+
+///order the category list according to globalMapCategoryOrder
+List<CategoryModel> reorderList(List<CategoryModel> categoriesList){
+
+  if(categoriesList.isEmpty){
+    return categoriesList;
+  }
+
+  Map<String,CategoryModel> categoryAndIdMap = {};
+  for (var element in categoriesList) {
+    categoryAndIdMap[element.uid] = element;
+  }
+
+  List<CategoryModel> orderCategories = categoriesList;
+
+  for (var index in categoryOrderMapGlobal.keys) {
+    orderCategories[int.parse(index)] = categoryAndIdMap[categoryOrderMapGlobal[index]]!;
+  }
+
+  return orderCategories;
+
 }

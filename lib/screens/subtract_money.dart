@@ -9,6 +9,7 @@ import 'package:money_tracker/utils/db_operations.dart';
 import 'package:money_tracker/widgets/dropdown_button.dart';
 import 'package:uuid/uuid.dart';
 import '../utils/global_constants.dart';
+import '../utils/global_functions.dart';
 import 'home_screen.dart';
 import 'package:money_tracker/models/category.dart';
 
@@ -78,19 +79,19 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                   decoration: InputDecoration(
                     labelText: 'Enter Amount',
                     labelStyle:  TextStyle(color: Colors.black.withOpacity(0.5)),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                          width: 1.5, color: Colors.blue),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                          width: 1.5, color: Colors.blue),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     border: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                          width: 1.5, color: Colors.blue),
+                      borderSide:  BorderSide(
+                          width: 1.5, color: Theme.of(context).primaryColor),
                       borderRadius: BorderRadius.circular(15),
                     ),
 
@@ -111,42 +112,48 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                       labelText: 'Enter Note',
                       labelStyle: TextStyle(color: Colors.black.withOpacity(0.5)),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
-                      )),
+                      )
+
+                  ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
 
                 FutureBuilder(
                     future: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').get(),
                     builder: (context,AsyncSnapshot<QuerySnapshot<Map<String,dynamic>>> snapshot) {
-                      List<String> categories = [];
 
                       final Map<String,Color> colorsMap = {};
-
+                      List<String> stringCategories = [];
                       if((snapshot.hasData) && (!(snapshot.connectionState==ConnectionState.waiting))){
-                        categories = snapshot.data!.docs.map((DocumentSnapshot<Map<String,dynamic>> document) => CategoryModel.fromMap(document.data()!).title ).toList();
-                        for (var snapshot in snapshot.data!.docs) {
+                        List<CategoryModel> categories = snapshot.data!.docs.map((DocumentSnapshot<Map<String,dynamic>> document) => CategoryModel.fromMap(document.data()!) ).toList();
+                        categories = reorderList(categories);
+                        stringCategories = categories.map((c) => c.title ).toList();
 
-                          CategoryModel model = CategoryModel.fromMap(snapshot.data());
-                          colorsMap[model.title] = Color(model.colorCode).withOpacity(1);
+
+                        for (var category in categories) {
+
+                          colorsMap[category.title] = Color(category.colorCode).withOpacity(1);
                         }
 
                       }
 
-                      return MyDropDownButton(dropdownValue: selectedCategory, items: categories, function: (String v) { selectedCategory=v; }, hintText: "Select Category",  colorsMap: colorsMap);
+
+
+                      return MyDropDownButton(dropdownValue: selectedCategory, items: stringCategories, function: (String v) { selectedCategory=v; }, hintText: "Select Category",colorsMap: colorsMap,);
                     }
                 ),
 
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
 
@@ -154,7 +161,7 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
 
                 MyDropDownButton(dropdownValue: selectedPaymentMode, items: const ["cash","card","bank"], function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
 
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
 

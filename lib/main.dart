@@ -1,3 +1,4 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_core/firebase_core.dart';
 import 'package:flutter/material.dart';
@@ -7,7 +8,6 @@ import 'package:money_tracker/screens/contact_developer.dart';
 import 'package:money_tracker/screens/home_screen.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:money_tracker/screens/login_screen.dart';
-import 'package:money_tracker/screens/signup_screen.dart';
 import 'package:money_tracker/utils/db_operations.dart';
 import 'package:permission_handler/permission_handler.dart';
 
@@ -19,7 +19,12 @@ Future<void> backgroundHandler(RemoteMessage message) async {
   print(message.notification!.title);
 }
 
+Map<String, dynamic> categoryOrderMapGlobal = {};
+
 void main() async{
+
+
+
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
   FirebaseMessaging.onBackgroundMessage(backgroundHandler);
@@ -34,6 +39,17 @@ void main() async{
 
 
   await DBOperations.initializeTotalAmountCollection();
+
+
+  ///getting categoryOrderDocument
+
+  DocumentSnapshot<Map<String,dynamic>> documentSnapshot = await FirebaseFirestore.instance.collection('categories_order').doc('doc_order').get();
+  categoryOrderMapGlobal = documentSnapshot.data() ?? {};
+  print("category order map global:");
+  print(categoryOrderMapGlobal);
+  print("in main, categoryOrderMap keys length:${categoryOrderMapGlobal.keys.length}");
+
+
   // await DBOperations.getCurrentUser();
 
   runApp(const MyApp());
@@ -42,6 +58,7 @@ void main() async{
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -49,9 +66,9 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepPurple,
       ),
-      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("27-12-2022")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
+      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("08-01-2023")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
     );
   }
 }

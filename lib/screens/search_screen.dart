@@ -21,6 +21,9 @@ class _SearchScreenState extends State<SearchScreen> {
   final TransactionScreenAmountController amountController =
       TransactionScreenAmountController();
 
+  String selectedSign = 'both';
+
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -42,7 +45,7 @@ class _SearchScreenState extends State<SearchScreen> {
             // labelText: 'Search Transactions',
             // labelStyle:  TextStyle(color: Colors.white),
             hintText: "Search Transactions",
-            hintStyle: TextStyle(color: Colors.white),
+            hintStyle: const TextStyle(color: Colors.white),
             enabledBorder: OutlineInputBorder(
               borderSide: const BorderSide(width: 1.5, color: Colors.white),
               borderRadius: BorderRadius.circular(15),
@@ -64,6 +67,66 @@ class _SearchScreenState extends State<SearchScreen> {
         padding: const EdgeInsets.all(16.0),
         child: Column(
           children: [
+            Padding(
+              padding: const EdgeInsets.symmetric(horizontal: 18.0),
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  InkWell(
+                    onTap: (){
+                      setState(() {
+                        if(selectedSign == '+'){
+                          selectedSign = 'both';
+                        }
+                        else{
+                          selectedSign = '+';
+
+                        }
+
+
+                      });
+                    },
+                    child: Container(
+                        decoration: BoxDecoration(
+                            color: selectedSign == '+' ? Colors.green : null,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black,width: 1)
+
+                        ),
+                        padding: EdgeInsets.all(7.5),
+                        child: Icon(Icons.add, color: selectedSign == '+' ? Colors.white : Colors.green,)),
+                  ),
+                  Text("Recent Transactions",
+                      style: TextStyle(
+                          color: Colors.black,
+                          fontSize: 16,
+                          fontWeight: FontWeight.bold)),
+                  InkWell(
+                    onTap: (){
+                      setState(() {
+                        if(selectedSign == '-'){
+                          selectedSign = 'both';
+                        }
+                        else{
+                          selectedSign = '-';
+
+                        }
+
+
+                      });
+                    },
+                    child: Container(
+                        decoration: BoxDecoration(
+                            color: selectedSign == '-' ? Colors.red : null,
+                            shape: BoxShape.circle,
+                            border: Border.all(color: Colors.black,width: 1)
+
+                        ),
+                        padding: EdgeInsets.all(7.5),
+                        child: Icon(Icons.remove, color: selectedSign == '-' ? Colors.white : Colors.red,)),
+                  )            ],
+              ),
+            ),
             FutureBuilder(
                 future: FirebaseFirestore.instance
                     .collection(Collections.transactions)
@@ -80,18 +143,7 @@ class _SearchScreenState extends State<SearchScreen> {
                     for (int i = 0; i < snapshot.data!.docs.length; i++) {
                       TransactionModel transaction = TransactionModel.fromMap(
                           snapshot.data!.docs[i].data());
-                      if ((transaction.category
-                              .toLowerCase()
-                              .contains(searchController.text.toLowerCase())) ||
-
-                          (transaction.desc.toLowerCase().contains(
-                                  searchController.text.toLowerCase()) ||
-                              searchController.text.trim().isEmpty)
-
-                      ||
-                          ( transaction.amount.toString().contains(searchController.text)  )
-
-                      ) {
+                      if (matchFilters(transaction)) {
                         setAmounts(transaction);
                       }
                     }
@@ -168,23 +220,13 @@ class _SearchScreenState extends State<SearchScreen> {
                               TransactionModel.fromMap(
                                   snapshot.data!.docs[index].data());
 
-                          if (transaction.category.toLowerCase().contains(
-                                  searchController.text.toLowerCase()) ||
-                              (searchController.text.trim().isEmpty) ||
-                              transaction.desc.toLowerCase().contains(
-                                  searchController.text.toLowerCase())
-                          || ( transaction.amount.toString().contains(searchController.text)  )
-                          ) {
+                          if (matchFilters(transaction)                          ) {
                             return TransactionCard(
                                 transactionModel: transaction);
                           }
                           print("false");
                           return SizedBox();
 
-                          // return Obx(() => Container(
-                          //   child: (transaction.category.toLowerCase().contains(searchController.searchText.value.toLowerCase())) || (transaction.desc.toLowerCase().contains(searchController.searchText.value.toLowerCase()) || searchController.searchText.value.trim().isEmpty) ?
-                          //   TransactionCard(transactionModel: transaction) : const SizedBox(),
-                          // ));
                         });
                   }),
             ),
@@ -225,6 +267,28 @@ class _SearchScreenState extends State<SearchScreen> {
         amountController.totalWithdrawCard = transaction.amount + amountController.totalWithdrawCard;
       }
     }
+  }
+
+  bool matchFilters(TransactionModel transaction){
+
+    if(transaction.transactionSign != selectedSign && selectedSign!='both'){
+      return false;
+    }
+
+    if((double.tryParse(searchController.text)!=null)){
+      return transaction.amount == double.parse(searchController.text);
+    }
+    return (transaction.category
+        .toLowerCase()
+        .contains(searchController.text.toLowerCase())) ||
+
+        (transaction.desc.toLowerCase().contains(
+            searchController.text.toLowerCase()) ||
+            searchController.text.trim().isEmpty)
+
+        ||
+        ( transaction.amount.toString().contains(searchController.text)  );
+
   }
 
 }

@@ -81,18 +81,18 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                       labelText: 'Enter Amount',
                       labelStyle:  TextStyle(color: Colors.black.withOpacity(0.5)),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
                       ),
                     border: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                          width: 1.5, color: Colors.blue),
+                      borderSide:  BorderSide(
+                          width: 1.5, color: Theme.of(context).primaryColor),
                       borderRadius: BorderRadius.circular(15),
                     ),
 
@@ -113,15 +113,16 @@ class _AddMoneyScreenState extends State<AddMoneyScreen> {
                       labelText: 'Enter Note',
                       labelStyle: TextStyle(color: Colors.black.withOpacity(0.5)),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
-                      )),
+                      )
+                  ),
                 ),
                 const SizedBox(
                   height: 15,

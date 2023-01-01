@@ -51,7 +51,7 @@ class _TransactionCardState extends State<TransactionCard> {
                     children: [
                       Text(widget.transactionModel.transactionType.capitalizeFirst!,style: const TextStyle(fontSize: 16, )),
                       const SizedBox(width: 10,),
-                      Flexible(child: Text("${widget.transactionModel.transactionSign} ${widget.transactionModel.amount}", style: TextStyle(color: widget.transactionModel.transactionSign=="+" ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 20),)),
+                      Flexible(child: Text("${widget.transactionModel.transactionSign} ${(widget.transactionModel.amount/widget.transactionModel.amount.toInt())==1 ? widget.transactionModel.amount.toInt() : widget.transactionModel.amount }", style: TextStyle(color: widget.transactionModel.transactionSign=="+" ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 20),)),
                     ],
                   ),
                 ],

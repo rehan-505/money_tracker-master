@@ -1,7 +1,7 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 
 class CategoryModel{
-  final String title;
+  String title;
   final String uid;
   final Timestamp createdAt;
   int colorCode;

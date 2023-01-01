@@ -58,6 +58,7 @@ void main() async{
 class MyApp extends StatelessWidget {
   const MyApp({Key? key}) : super(key: key);
 
+
   // This widget is the root of your application.
   @override
   Widget build(BuildContext context) {
@@ -65,9 +66,9 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.blue,
+        primarySwatch: Colors.deepPurple,
       ),
-      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("27-12-2022")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
+      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("08-01-2023")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
     );
   }
 }

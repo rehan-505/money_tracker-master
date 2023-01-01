@@ -50,96 +50,101 @@ class _CategoryTileState extends State<CategoryTile> {
       padding: const EdgeInsets.only(bottom: 16.0),
       child: Material(
         elevation: 2,
-        child: Container(
-          margin: const EdgeInsets.all(16),
-          child: Row(
-            children: [
+        child: InkWell(
+          onLongPress: (){
+            updateCategoryName();
+          },
+          child: Container(
+            margin: const EdgeInsets.all(16),
+            child: Row(
+              children: [
 
-              ReorderableDragStartListener(
-                // key: ValueKey(index) ,
-                  index: index,
-                  child: const Icon(Icons.drag_indicator,size: 35,color: Colors.grey,)),
-              const SizedBox(
-                width: 10,
-              ),
-              Expanded(
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(widget.category.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(widget.category.colorCode).withOpacity(1)),),
-                      const SizedBox(
-                        height: 4,
-                      ),
-                      // Text(user.email),
-                      // const SizedBox(
-                      //   height: 4,
-                      // ),
-                      // Text(user.phone),
-                      // const SizedBox(
-                      //   height: 4,
-                      // ),
-                    ],
-                  )),
-              InkWell(
-                  onTap: ()async{
-                    int colorCode = (await showColorPickerDialog(context, Color(widget.category.colorCode))).value;
-                    updateColor(colorCode);
+                ReorderableDragStartListener(
+                  // key: ValueKey(index) ,
+                    index: index,
+                    child: const Icon(Icons.drag_indicator,size: 35,color: Colors.grey,)),
+                const SizedBox(
+                  width: 10,
+                ),
+                Expanded(
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(widget.category.title, style: TextStyle(fontSize: 18, fontWeight: FontWeight.bold, color: Color(widget.category.colorCode).withOpacity(1)),),
+                        const SizedBox(
+                          height: 4,
+                        ),
+                        // Text(user.email),
+                        // const SizedBox(
+                        //   height: 4,
+                        // ),
+                        // Text(user.phone),
+                        // const SizedBox(
+                        //   height: 4,
+                        // ),
+                      ],
+                    )),
+                InkWell(
+                    onTap: ()async{
+                      int colorCode = (await showColorPickerDialog(context, Color(widget.category.colorCode))).value;
+                      updateColor(colorCode);
 
-                  },
-                  child: Icon(Icons.color_lens,color: Color(widget.category.colorCode).withOpacity(1))),
-              const SizedBox(width: 20,),
-              InkWell(
-                  onTap: () async{
-                    await showDialog(
-                        context: context,
-                        barrierColor: Colors.transparent,
-                        builder: (BuildContext ctx) {
-                          return                       BackdropFilter(
-                            filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                            child: AlertDialog(
-                              elevation: 10,
-                              content: const Text('Are you sure you want to delete this category ?'),
-                              actions: [
-                                TextButton(
-                                    onPressed: () async {
-                                      Navigator.of(context).pop();
-                                      setState(() {
-                                        deleted = true;
-                                      });
-                                      Get.snackbar("Success","Category deleted", backgroundColor: Colors.white);
-                                      widget.orderedCategories.removeWhere((element) => element.uid==widget.category.uid);
+                    },
+                    child: Icon(Icons.color_lens,color: Color(widget.category.colorCode).withOpacity(1))),
+                const SizedBox(width: 20,),
+                InkWell(
+                    onTap: () async{
+                      await showDialog(
+                          context: context,
+                          barrierColor: Colors.transparent,
+                          builder: (BuildContext ctx) {
+                            return                       BackdropFilter(
+                              filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+                              child: AlertDialog(
+                                elevation: 10,
+                                content: const Text('Are you sure you want to delete this category ?'),
+                                actions: [
+                                  TextButton(
+                                      onPressed: () async {
+                                        Navigator.of(context).pop();
+                                        setState(() {
+                                          deleted = true;
+                                        });
+                                        Get.snackbar("Success","Category deleted", backgroundColor: Colors.white);
+                                        widget.orderedCategories.removeWhere((element) => element.uid==widget.category.uid);
 
-                                      await FirebaseFirestore.instance
-                                          .collection(Collections.categories)
-                                          .doc(widget.category.uid)
-                                          .delete();
+                                        await FirebaseFirestore.instance
+                                            .collection(Collections.categories)
+                                            .doc(widget.category.uid)
+                                            .delete();
 
-                                      await CategoryController.uploadDocGlobal(widget.orderedCategories);
+                                        await CategoryController.uploadDocGlobal(widget.orderedCategories);
 
-                                    },
-                                    child: const Text(
-                                      'Yes',
-                                      style: TextStyle(color: Colors.brown),
-                                    )),
-                                TextButton(
-                                    onPressed: () {
-                                      Navigator.of(context).pop();
-                                    },
-                                    child:
-                                    const Text('No', style: TextStyle(color: Colors.brown)))
-                              ],
-                            ),
-                          );
-                        });
+                                      },
+                                      child: const Text(
+                                        'Yes',
+                                        style: TextStyle(color: Colors.brown),
+                                      )),
+                                  TextButton(
+                                      onPressed: () {
+                                        Navigator.of(context).pop();
+                                      },
+                                      child:
+                                      const Text('No', style: TextStyle(color: Colors.brown)))
+                                ],
+                              ),
+                            );
+                          });
 
 
-                  },
-                  child: const Icon(
-                    Icons.delete_forever_sharp,
-                    color: Colors.red,
-                  ))
-            ],
+                    },
+                    child: const Icon(
+                      Icons.delete_forever_sharp,
+                      color: Colors.red,
+                    ))
+              ],
+            ),
           ),
         ),
       ),
@@ -163,4 +168,58 @@ class _CategoryTileState extends State<CategoryTile> {
       'colorCode': colorCode
     });
   }
+
+  Future<void> updateCategoryName() async{
+    TextEditingController controller = TextEditingController(text: widget.category.title);
+    await showDialog(
+        context: context,
+        barrierColor: Colors.transparent,
+        builder: (BuildContext ctx) {
+          return BackdropFilter(
+            filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
+            child: AlertDialog(
+              elevation: 10,
+              title: const Text("Rename Category"),
+              content: TextFormField(
+                controller: controller,
+                decoration: const InputDecoration(
+                  labelText: "Category Title",
+                  isDense: true,
+                  border: OutlineInputBorder(),
+                  focusedBorder: OutlineInputBorder(),
+                ),
+              ),
+              actions: [
+                TextButton(
+                    onPressed: () {
+                      Navigator.of(context).pop();
+                    },
+                    child:
+                    const Text('Cancel', style: TextStyle(color: Colors.blue))),
+                TextButton(
+                    onPressed: () async {
+                      if(controller.text.trim().isNotEmpty){
+                        Navigator.of(context).pop();
+                        setState(() {
+                          widget.category.title = controller.text;
+                        });
+                        FirebaseFirestore.instance.collection('categories').doc(widget.category.uid).update({
+                          'title' : widget.category.title
+                        });
+                      }
+                      else{
+                        Get.snackbar("Request Denied", "Category name can not be empty", backgroundColor: Colors.white);
+                      }
+                    },
+                    child: const Text(
+                      'Save',
+                      style: TextStyle(color: Colors.blue),
+                    )),
+              ],
+            ),
+          );
+        });
+
+  }
+
 }

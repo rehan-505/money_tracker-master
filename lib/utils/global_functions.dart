@@ -41,16 +41,16 @@ Widget amountContainer(
               child: Column(
                 mainAxisSize: MainAxisSize.min,
                 children: [
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("Added:",
+                      const Text("Added",
 
                         style: TextStyle(fontSize: 12),
 
                       ),
                       const SizedBox(
-                        width: 10,
+                        height: 5,
                       ),
                       Text(
                         totalAdded.toStringAsFixed(1),
@@ -63,18 +63,17 @@ Widget amountContainer(
                     ],
                   ),
                   const SizedBox(
-                    height: 5,
+                    height: 8,
                   ),
-                  Row(
-                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
-
+                  Column(
+                    mainAxisSize: MainAxisSize.min,
                     children: [
-                      const Text("Withdrawn:",
+                      const Text("Withdrawn",
                         style: TextStyle(fontSize: 12),
 
                       ),
                       const SizedBox(
-                        width: 10,
+                        height: 5,
                       ),
                       Text(
                         totalWithdrawal.toStringAsFixed(1),

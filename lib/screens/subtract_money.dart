@@ -79,19 +79,19 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                   decoration: InputDecoration(
                     labelText: 'Enter Amount',
                     labelStyle:  TextStyle(color: Colors.black.withOpacity(0.5)),
-                    enabledBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                          width: 1.5, color: Colors.blue),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
-                    focusedBorder: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                          width: 1.5, color: Colors.blue),
-                      borderRadius: BorderRadius.circular(15),
-                    ),
+                      enabledBorder: OutlineInputBorder(
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
+                      focusedBorder: OutlineInputBorder(
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
+                        borderRadius: BorderRadius.circular(15),
+                      ),
                     border: OutlineInputBorder(
-                      borderSide: const BorderSide(
-                          width: 1.5, color: Colors.blue),
+                      borderSide:  BorderSide(
+                          width: 1.5, color: Theme.of(context).primaryColor),
                       borderRadius: BorderRadius.circular(15),
                     ),
 
@@ -112,17 +112,19 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                       labelText: 'Enter Note',
                       labelStyle: TextStyle(color: Colors.black.withOpacity(0.5)),
                       enabledBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
                       ),
                       focusedBorder: OutlineInputBorder(
-                        borderSide: const BorderSide(
-                            width: 1.5, color: Colors.blue),
+                        borderSide:  BorderSide(
+                            width: 1.5, color: Theme.of(context).primaryColor),
                         borderRadius: BorderRadius.circular(15),
-                      )),
+                      )
+
+                  ),
                 ),
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
 
@@ -151,7 +153,7 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
                     }
                 ),
 
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
 
@@ -159,7 +161,7 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
 
                 MyDropDownButton(dropdownValue: selectedPaymentMode, items: const ["cash","card","bank"], function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
 
-                SizedBox(
+                const SizedBox(
                   height: 15,
                 ),
 

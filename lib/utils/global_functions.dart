@@ -56,7 +56,7 @@ Widget amountContainer(
                         totalAdded.toStringAsFixed(1),
                         style: const TextStyle(
                             color: Colors.green, fontWeight: FontWeight.bold,
-                            fontSize: 12
+                            fontSize: 16
 
                         ),
                       ),
@@ -79,7 +79,7 @@ Widget amountContainer(
                         totalWithdrawal.toStringAsFixed(1),
                         style: const TextStyle(
                             color: Colors.red, fontWeight: FontWeight.bold,
-                            fontSize: 12
+                            fontSize: 16
                         ),
                       ),
                     ],

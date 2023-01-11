@@ -5,6 +5,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker/controllers/logout_controller.dart';
+import 'package:money_tracker/models/total_amount.dart';
 import 'package:money_tracker/models/transaction.dart';
 import 'package:money_tracker/screens/add_money_screen.dart';
 import 'package:money_tracker/screens/login_screen.dart';
@@ -90,8 +91,9 @@ class _HomeScreenState extends State<HomeScreen> {
     );
   }
 
-  final TransactionScreenAmountController amountController =
-  TransactionScreenAmountController();
+  final TransactionScreenAmountController amountController = TransactionScreenAmountController();
+
+  bool dataLoaded = false;
 
 
   @override
@@ -140,12 +142,10 @@ class _HomeScreenState extends State<HomeScreen> {
                         count++;
                         setAmounts(transaction);
 
-
-
-
-
                       }
                     }
+
+                    dataLoaded = true;
                   }
 
                   return Row(
@@ -268,9 +268,7 @@ class _HomeScreenState extends State<HomeScreen> {
                           return TransactionCard(
                             transactionModel: transaction,
                            onTransactionDelete: (){
-                              setState(() {
-
-                              });
+                              setState(() {});
                            },
                           );
                         });
@@ -310,7 +308,23 @@ class _HomeScreenState extends State<HomeScreen> {
             Expanded(
                 child: ElevatedButton(
                     onPressed: () {
-                      Get.to(() => SubtractMoneyScreen());
+                      if(dataLoaded){
+                        Get.to(() => SubtractMoneyScreen(
+                              totalAmount: TotalAmount(
+                                  cash: amountController.totalAmountCash,
+                                  cashAllTimeAdded: amountController.totalAddedCash,
+                                  cashAllTimeWithdraw: amountController.totalWithdrawCash,
+                                  card: amountController.totalAmountCard,
+                                  cardAllTimeAdded: amountController.totalAddedCard,
+                                  cardAllTimeWithdraw: amountController.totalWithdrawCard,
+                                  bank: amountController.totalAmountBank,
+                                  bankAllTimeAdded: amountController.totalAddedBank,
+                                  bankAllTimeWithdraw: amountController.totalWithdrawBank),
+                            ));
+                      }
+                      else{
+                        Get.snackbar("Please wait", "We are loading data",backgroundColor: Colors.white);
+                      }
                     },
                     onLongPress: (){
                       // Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '-'));
@@ -385,7 +399,6 @@ class _HomeScreenState extends State<HomeScreen> {
       }
     }
   }
-
 
 }
 

@@ -15,7 +15,8 @@ import 'package:money_tracker/models/category.dart';
 
 
 class SubtractMoneyScreen extends StatefulWidget {
-  const SubtractMoneyScreen({Key? key}) : super(key: key);
+  const SubtractMoneyScreen({Key? key, required this.totalAmount}) : super(key: key);
+  final TotalAmount totalAmount;
 
   @override
   State<SubtractMoneyScreen> createState() => _SubtractMoneyScreenState();
@@ -216,7 +217,7 @@ class _SubtractMoneyScreenState extends State<SubtractMoneyScreen> {
     setState(() {
       loading = true;
     });
-    TotalAmount totalAmount = await DBOperations.getTotalAmount();
+    TotalAmount totalAmount = widget.totalAmount;
    if ( ((selectedPaymentMode=='card')  && (double.parse(amountController.text)<=totalAmount.card)) || ((selectedPaymentMode=='cash')  && (double.parse(amountController.text)<=totalAmount.cash))
    || ((selectedPaymentMode=='bank')  && (double.parse(amountController.text)<=totalAmount.bank))
 

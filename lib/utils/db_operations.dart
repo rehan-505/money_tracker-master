@@ -87,6 +87,9 @@ class DBOperations{
       if(paymentMode.toLowerCase()=="cash"){
         allTimeAdded = "cashAllTimeAdded";
       }
+      else if(paymentMode.toLowerCase()=="bank"){
+        allTimeAdded = "bankAllTimeAdded";
+      }
       else {
         allTimeAdded = "cardAllTimeAdded";
       }
@@ -109,6 +112,9 @@ class DBOperations{
       String allTimeWithdraw = '';
       if(category.toLowerCase()=="cash"){
         allTimeWithdraw = "cashAllTimeWithdraw";
+      }
+      else if(category.toLowerCase()=="bank"){
+        allTimeWithdraw = "bankAllTimeWithdraw";
       }
       else {
         allTimeWithdraw = "cardAllTimeWithdraw";

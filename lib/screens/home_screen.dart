@@ -107,14 +107,14 @@ class _HomeScreenState extends State<HomeScreen> {
         title: const Text("Kitaab"),
         centerTitle: true,
         actions: [
-          InkWell(child: Icon(Icons.refresh_outlined),
+          InkWell(child: const Icon(Icons.refresh_outlined),
           onTap: (){
             setState(() {
 
             });
           },
           ),
-          SizedBox(
+          const SizedBox(
             width: 20,
           ),
         ],
@@ -251,11 +251,11 @@ class _HomeScreenState extends State<HomeScreen> {
                           }
 
                           if(DateFormat('dd-MM-yyyy').format(DateTime.fromMillisecondsSinceEpoch(transaction.createdAt.millisecondsSinceEpoch)) != DateFormat('dd-MM-yyyy').format(DateTime.now())){
-                            return SizedBox();
+                            return const SizedBox();
                           }
 
                           if(!isAdmin && userCount>9){
-                            return SizedBox();
+                            return const SizedBox();
                           }
 
                           if(!isAdmin){
@@ -294,10 +294,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       onLongPress: (){
                         // Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '+'));
                       },
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("Add Money"),
+                        Text("Add Money"),
                         SizedBox(width: 10,),
                         Text('+', style: TextStyle(color: Colors.green, fontWeight: FontWeight.bold, fontSize: 40),)
                       ],
@@ -330,10 +330,10 @@ class _HomeScreenState extends State<HomeScreen> {
                       // Get.to(() =>  const SpecificSignedTransactionsScreen(transactionSign: '-'));
                     },
 
-                    child: Row(
+                    child: const Row(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const Text("Subtract Money"),
+                        Text("Subtract Money"),
                         SizedBox(width: 10,),
                         Text('-', style: TextStyle(color: Colors.red, fontWeight: FontWeight.bold, fontSize: 40),)
                       ],

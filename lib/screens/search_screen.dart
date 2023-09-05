@@ -69,6 +69,8 @@ class _SearchScreenState extends State<SearchScreen> {
           cursorColor: Colors.white,
           style: const TextStyle(color: Colors.white),
         ),
+        centerTitle: true,
+
       ),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
@@ -114,6 +116,7 @@ class _SearchScreenState extends State<SearchScreen> {
                   )            ],
               ),
             ),
+            SizedBox(height: 20,),
             Row(
               children: [
                 Expanded(

@@ -2,13 +2,11 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
-import 'package:money_tracker/controllers/filters_collapse_controller.dart';
 import 'package:money_tracker/controllers/transaction_controller.dart';
 import 'package:money_tracker/models/transaction.dart';
 import 'package:money_tracker/screens/search_screen.dart';
 import 'package:money_tracker/utils/collection_names.dart';
 import 'package:money_tracker/widgets/transaction_card.dart';
-import '../controllers/transaction_screen_amount_controller.dart';
 import '../models/category.dart';
 import '../utils/global_functions.dart';
 import '../widgets/dropdown_button.dart';
@@ -31,6 +29,7 @@ class TransactionsScreen extends StatelessWidget {
           if (snapshot.connectionState == ConnectionState.waiting || !(snapshot.hasData)) {
             return Scaffold(
               appBar: AppBar(
+                centerTitle: true,
                 title: const Text('Kitaab'),
               ),
               body:  Center(
@@ -43,9 +42,9 @@ class TransactionsScreen extends StatelessWidget {
               .map((e) => TransactionModel.fromMap(e.data()))
               .toList();
           transactionController.filterList();
-          print('total transactions before filtering: ${transactionController.allTransactions.length}');
+          debugPrint('total transactions before filtering: ${transactionController.allTransactions.length}');
 
-          return TransactionBodyScreen();
+          return const TransactionBodyScreen();
         });
   }
 }
@@ -62,23 +61,9 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
 
   final TransactionController transactionController = Get.find();
 
-  bool showAll = true;
-
-  // bool firstFetch = true;
-
-  @override
-  void initState() {
-    // transactions = List.from(transactionController.allTransactions);
-    // setContainerAmounts(transactionController.allTransactions);
-    super.initState();
-  }
-
   @override
   Widget build(BuildContext context) {
 
-    // setContainerAmounts(transactions);
-    // print(amountController.totalAmountCard);
-    // amountController.reset();
     return Scaffold(
       appBar: AppBar(title: const Text("Kitaab"), centerTitle: true, actions: [
         InkWell(
@@ -106,7 +91,7 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
 
   Widget _buildTransactionsList(List<TransactionModel> transactionsList){
 
-    print('total transactions after filtering: ${transactionsList.length}');
+    debugPrint('total transactions after filtering: ${transactionsList.length}');
 
     if(transactionsList.isEmpty) {
       return Column(
@@ -141,8 +126,6 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
             Expanded(
                 child: ElevatedButton(
                     onPressed: () {
-                      // if (formKey.currentState!.validate()) {
-                      // }
                       transactionController.filterList();
                       setState(() {});
                     },

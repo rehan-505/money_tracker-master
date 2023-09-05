@@ -110,6 +110,7 @@ class TransactionController extends GetxController{
     selectedPaymentMode = 'All Payment Modes';
     selectedSign = 'both';
     filteredTransactions.value = List.from(allTransactions);
+    setContainerAmounts(filteredTransactions);
     // transactions = List.from(transactionController.allTransactions);
     // setState(() {});
   }

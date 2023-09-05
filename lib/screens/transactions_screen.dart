@@ -25,10 +25,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
   String selectedCategory = "All Categories";
 
   final TransactionScreenAmountController amountController =
-  TransactionScreenAmountController();
+      TransactionScreenAmountController();
 
   final FiltersCollapseController collapseController =
-  FiltersCollapseController();
+      FiltersCollapseController();
 
   String? selectedPaymentMode = 'All Payment Modes';
 
@@ -42,124 +42,140 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
 
   final TextEditingController searchController = TextEditingController();
 
+  List<TransactionModel> transactions = [];
+  List<TransactionModel> allTransactions = [];
+  bool firstFetch = true;
+
   @override
   Widget build(BuildContext context) {
-
     // print(amountController.totalAmountCard);
     // amountController.reset();
     return Scaffold(
-      appBar: AppBar(
-          title: const Text("Kitaab"),
-          centerTitle: true,
-          actions: [
-            InkWell(
-              onTap: () {
-                Get.to(SearchScreen());
-              },
-              child: const Icon(
-                Icons.search,
-                color: Colors.white,
-              ),
-            ),
-            const SizedBox(
-              width: 20,
-            )
-          ]),
+      appBar: AppBar(title: const Text("Kitaab"), centerTitle: true, actions: [
+        InkWell(
+          onTap: () {
+            Get.to(SearchScreen(transactions: allTransactions,));
+          },
+          child: const Icon(
+            Icons.search,
+            color: Colors.white,
+          ),
+        ),
+        const SizedBox(
+          width: 20,
+        )
+      ]),
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Form(
           key: formKey,
           child: StreamBuilder(
-              stream:  (selectedStartDate == null || selectedEndDate == null)
+              stream: (selectedStartDate == null || selectedEndDate == null)
                   ? FirebaseFirestore.instance
-                  .collection(Collections.transactions)
-                  .orderBy("createdAt", descending: true)
-                  .snapshots()
+                      .collection(Collections.transactions)
+                      .orderBy("createdAt", descending: true)
+                      .snapshots()
                   : FirebaseFirestore.instance
-                  .collection(Collections.transactions)
-                  .where("createdAt",
-                  isGreaterThanOrEqualTo: selectedStartDate,
-                  isLessThanOrEqualTo: selectedEndDate)
-                  .orderBy("createdAt", descending: true)
-                  .snapshots(),
+                      .collection(Collections.transactions)
+                      .where("createdAt",
+                          isGreaterThanOrEqualTo: selectedStartDate,
+                          isLessThanOrEqualTo: selectedEndDate)
+                      .orderBy("createdAt", descending: true)
+                      .snapshots(),
               builder: (context,
-                  AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
-                  snapshot) {
-
+                  AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
                 if (snapshot.connectionState == ConnectionState.waiting) {
                   return const Center(
                     child: CircularProgressIndicator(),
                   );
                 }
 
+                transactions = (snapshot.data?.docs ?? [])
+                    .map((e) => TransactionModel.fromMap(e.data()))
+                    .toList();
+                print('total transactions before filtering: ${transactions.length}');
 
-                if (!snapshot.hasData) {
-                  return const Center(
-                    child: Text("No Transactions to show"),
-                  );
+                if(transactions.isNotEmpty && firstFetch){
+                  allTransactions = List.from(transactions);
+                  firstFetch = false;
                 }
 
-                if (snapshot.data!.docs.isEmpty) {
-                  return const Center(
-                    child: Text("No Transactions to show"),
-                  );
-                }
+                transactions = transactions.where((element) => matchFilters(element)).toList();
 
-                return ListView.builder(
-                    itemCount: (snapshot.data!.size)+1,
-                    itemBuilder: (context, index) {
-
-                      if(index==0){
-                        return _buildUpperArea();
-                      }
-
-                      TransactionModel transaction =
-                      TransactionModel.fromMap(
-                          snapshot.data!.docs[index-1].data());
-                      if (matchFilters(transaction)  ) {
-                        // setAmounts(transaction);
-
-                        return TransactionCard(
-                          transactionModel: transaction,
-                        );
-                      }
-                      return const SizedBox();
-                    });
+                amountController.reset();
+                setContainerAmounts(transactions);
+                return _buildShowTransactionsList(transactions);
               }),
         ),
       ),
     );
   }
 
-  void setAmounts(TransactionModel transaction) {
-    if (transaction.transactionSign == '+') {
-      if (transaction.transactionType == 'cash') {
-        amountController.totalAmountCash = transaction.amount + amountController.totalAmountCash;
-        amountController.totalAddedCash = transaction.amount + amountController.totalAddedCash;
-      }
-      else if (transaction.transactionType=='bank'){
-        amountController.totalAmountBank = amountController.totalAmountBank + transaction.amount;
-        amountController.totalAddedBank = transaction.amount + amountController.totalAddedBank;
-      }
+  Widget _buildShowTransactionsList(List<TransactionModel> transactionsList){
 
-      else {
-        amountController.totalAmountCard = amountController.totalAmountCard + transaction.amount;
-        amountController.totalAddedCard = transaction.amount + amountController.totalAddedCard;
-      }
-    } else if (transaction.transactionSign == '-') {
-      if (transaction.transactionType == 'cash') {
-        amountController.totalAmountCash = amountController.totalAmountCash - transaction.amount;
-        amountController.totalWithdrawCash = transaction.amount + amountController.totalWithdrawCash;
-      }
-      else if (transaction.transactionType=='bank'){
-        amountController.totalAmountBank = amountController.totalAmountBank - transaction.amount;
-        amountController.totalWithdrawBank = transaction.amount + amountController.totalWithdrawBank;
-      }
+    print('total transactions after filtering: ${transactionsList.length}');
 
+    if(transactionsList.isEmpty) {
+      return Column(
+        children: [
+          _buildUpperArea(),
+          const SizedBox(height: 10,),
+          const Center(child: Text('No transactions found')),
+        ],
+      );
+    }
 
-      else {
-        amountController.totalAmountCard = amountController.totalAmountCard - transaction.amount;
-        amountController.totalWithdrawCard = transaction.amount + amountController.totalWithdrawCard;
+    return ListView.builder(
+        itemCount: (transactionsList.length) + 1,
+        itemBuilder: (context, index) {
+          if (index == 0) {
+            return _buildUpperArea();
+          }
+
+          TransactionModel transaction = transactionsList[index - 1];
+          return TransactionCard(
+            transactionModel: transaction,
+          );
+        });
+  }
+
+  void setContainerAmounts(List<TransactionModel> transactionsList) {
+    for (int i = 0; i < transactionsList.length; i++){
+      TransactionModel transaction = transactionsList[i];
+      if (transaction.transactionSign == '+') {
+        if (transaction.transactionType == 'cash') {
+          amountController.totalAmountCash =
+              transaction.amount + amountController.totalAmountCash;
+          amountController.totalAddedCash =
+              transaction.amount + amountController.totalAddedCash;
+        } else if (transaction.transactionType == 'bank') {
+          amountController.totalAmountBank =
+              amountController.totalAmountBank + transaction.amount;
+          amountController.totalAddedBank =
+              transaction.amount + amountController.totalAddedBank;
+        } else {
+          amountController.totalAmountCard =
+              amountController.totalAmountCard + transaction.amount;
+          amountController.totalAddedCard =
+              transaction.amount + amountController.totalAddedCard;
+        }
+      } else if (transaction.transactionSign == '-') {
+        if (transaction.transactionType == 'cash') {
+          amountController.totalAmountCash =
+              amountController.totalAmountCash - transaction.amount;
+          amountController.totalWithdrawCash =
+              transaction.amount + amountController.totalWithdrawCash;
+        } else if (transaction.transactionType == 'bank') {
+          amountController.totalAmountBank =
+              amountController.totalAmountBank - transaction.amount;
+          amountController.totalWithdrawBank =
+              transaction.amount + amountController.totalWithdrawBank;
+        } else {
+          amountController.totalAmountCard =
+              amountController.totalAmountCard - transaction.amount;
+          amountController.totalWithdrawCard =
+              transaction.amount + amountController.totalWithdrawCard;
+        }
       }
     }
   }
@@ -204,329 +220,315 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
-  _buildUpperArea(){
+  _buildUpperArea() {
+
+    // return SizedBox();
+
     return Column(
       children: [
         const SizedBox(
           height: 10,
         ),
         Obx(() => InkWell(
-          onTap: () {
-            collapseController.collapse.value =
-            !collapseController.collapse.value;
-          },
-          child: Row(
-            children: [
-              Text(collapseController.collapse.value
-                  ? "Expand Filters"
-                  : "Collapse Filters"),
-              const Icon(Icons.arrow_drop_down_sharp),
-            ],
-          ),
-        )),
-        Obx(() => Container(
-          child: collapseController.collapse.value
-              ? const SizedBox()
-              : Column(
-            mainAxisSize: MainAxisSize.min,
-            children: [
-              const SizedBox(
-                height: 20,
-              ),
-              Row(
+              onTap: () {
+                collapseController.collapse.value =
+                    !collapseController.collapse.value;
+              },
+              child: Row(
                 children: [
-                  Expanded(
-                      child: TextFormField(
-                        controller: startTimeController,
-                        onTap: () async {
-                          selectedStartDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2025));
-                          if (selectedStartDate != null) {
-                            startTimeController.text =
-                                DateFormat("dd-MM-yyyy")
-                                    .format(selectedStartDate!)
-                                    .toString();
-                            // setState(() {});
-                          }
-                        },
-
-                        validator: (value) {
-                          if (selectedStartDate == null) {
-                            return "field is required";
-                          }
-                          return null;
-                        },
-
-                        decoration: const InputDecoration(
-                            labelText: "Start Date",
-                            hintText: "Start Date",
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(),
-                            disabledBorder: OutlineInputBorder(),
-                            enabledBorder: OutlineInputBorder(),
-                            isDense: true),
-                        maxLines: 1,
-                        readOnly: true,
-                        // enabled: false,
-                      )),
-                  const SizedBox(
-                    width: 20,
-                  ),
-                  Expanded(
-                      child: TextFormField(
-                        controller: endTimeController,
-                        onTap: () async {
-                          selectedEndDate = await showDatePicker(
-                              context: context,
-                              initialDate: DateTime.now(),
-                              firstDate: DateTime(2020),
-                              lastDate: DateTime(2025));
-                          if (selectedEndDate != null) {
-                            endTimeController.text =
-                                DateFormat("dd-MM-yyyy")
-                                    .format(selectedEndDate!)
-                                    .toString();
-                            // setState(() {});
-                          }
-                        },
-
-                        validator: (value) {
-                          if (selectedEndDate == null) {
-                            return "field is required";
-                          }
-                          return null;
-                        },
-
-                        decoration: const InputDecoration(
-                            labelText: "End Date",
-                            hintText: "End Date",
-                            border: OutlineInputBorder(),
-                            focusedBorder: OutlineInputBorder(),
-                            disabledBorder: OutlineInputBorder(),
-                            enabledBorder: OutlineInputBorder(),
-                            isDense: true),
-                        maxLines: 1,
-                        readOnly: true,
-                        // enabled: false,
-                      ))
+                  Text(collapseController.collapse.value
+                      ? "Expand Filters"
+                      : "Collapse Filters"),
+                  const Icon(Icons.arrow_drop_down_sharp),
                 ],
               ),
-              const SizedBox(
-                height: 10,
-              ),
-              TextFormField(
-                controller: searchController,
-                decoration: const InputDecoration(
-                  labelText: "Search",
-                  hintText: "Search",
-                  border: OutlineInputBorder(),
-                  focusedBorder: OutlineInputBorder(),
-                  disabledBorder: OutlineInputBorder(),
-                  enabledBorder: OutlineInputBorder(),
-                  isDense: true,
-
-                ),
-                maxLines: 1,
-                // enabled: false,
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-
-              FutureBuilder(
-                  future: FirebaseFirestore.instance.collection(Collections.categories).orderBy('createdAt').get(),
-                  builder: (context,AsyncSnapshot<QuerySnapshot<Map<String,dynamic>>> snapshot) {
-
-                    final Map<String,Color> colorsMap = {};
-                    List<String> stringCategories = [];
-                    if((snapshot.hasData) && (!(snapshot.connectionState==ConnectionState.waiting))){
-                      List<CategoryModel> categories = snapshot.data!.docs.map((DocumentSnapshot<Map<String,dynamic>> document) => CategoryModel.fromMap(document.data()!) ).toList();
-                      categories = reorderList(categories);
-                      stringCategories = categories.map((c) => c.title ).toList();
-                      stringCategories.insert(0, "All Categories");
-
-
-
-                      for (var category in categories) {
-
-                        colorsMap[category.title] = Color(category.colorCode).withOpacity(1);
-                      }
-
-                    }
-
-
-
-                    return MyDropDownButton(dropdownValue: selectedCategory, items: stringCategories, function: (String v) { selectedCategory=v; }, hintText: "Select Category",colorsMap: colorsMap,);
-                  }
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              MyDropDownButton(
-                dropdownValue: selectedPaymentMode,
-                items: const [
-                  'All Payment Modes',
-                  'cash',
-                  'card',
-                  'bank'
-                ],
-                function: (String v) {
-                  selectedPaymentMode = v;
-                },
-                hintText: "Select Payment Mode",
-              ),
-              const SizedBox(
-                height: 10,
-              ),
-              buttonsRow(),
-              const SizedBox(height: 10),
-              StreamBuilder(
-                  stream: (selectedStartDate == null || selectedEndDate == null)
-                      ? FirebaseFirestore.instance
-                      .collection(Collections.transactions)
-                      .orderBy("createdAt", descending: true)
-                      .snapshots()
-                      : FirebaseFirestore.instance
-                      .collection(Collections.transactions)
-                      .where("createdAt",
-                      isGreaterThanOrEqualTo: selectedStartDate,
-                      isLessThanOrEqualTo: selectedEndDate)
-                      .orderBy("createdAt", descending: true)
-                      .snapshots(),
-                  builder: (context, AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
-                    amountController.reset();
-                    if(snapshot.hasData && (!(snapshot.connectionState==ConnectionState.waiting)) ){
-                      for(int i=0; i< snapshot.data!.docs.length; i++){
-                        TransactionModel transaction = TransactionModel.fromMap(snapshot.data!.docs[i].data());
-                        if (           matchFilters(transaction)             ){
-                          setAmounts(transaction);
-
-                        }
-                      }
-                    }
-
-                    return Row(
+            )),
+        Obx(() => Container(
+              child: collapseController.collapse.value
+                  ? const SizedBox()
+                  : Column(
+                      mainAxisSize: MainAxisSize.min,
                       children: [
-                        Expanded(
-                            child: amountContainer(
-                              "Cash",
-                              amountController.totalAmountCash,
-                              amountController.totalAddedCash,
-                              amountController.totalWithdrawCash
-                              ,
-                            )),
                         const SizedBox(
-                          width: 15,
+                          height: 20,
                         ),
-                        Expanded(
-                            child: amountContainer(
-                              "Card",
-                              amountController.totalAmountCard,
-                              amountController.totalAddedCard,
-                              amountController.totalWithdrawCard
-                              ,
+                        Row(
+                          children: [
+                            Expanded(
+                                child: TextFormField(
+                              controller: startTimeController,
+                              onTap: () async {
+                                selectedStartDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime(2025));
+                                if (selectedStartDate != null) {
+                                  startTimeController.text =
+                                      DateFormat("dd-MM-yyyy")
+                                          .format(selectedStartDate!)
+                                          .toString();
+                                  // setState(() {});
+                                }
+                              },
+
+                              validator: (value) {
+                                if (selectedStartDate == null) {
+                                  return "field is required";
+                                }
+                                return null;
+                              },
+
+                              decoration: const InputDecoration(
+                                  labelText: "Start Date",
+                                  hintText: "Start Date",
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(),
+                                  disabledBorder: OutlineInputBorder(),
+                                  enabledBorder: OutlineInputBorder(),
+                                  isDense: true),
+                              maxLines: 1,
+                              readOnly: true,
+                              // enabled: false,
                             )),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        Expanded(
-                            child: amountContainer(
-                              "Bank",
-                              amountController.totalAmountBank,
-                              amountController.totalAddedBank,
-                              amountController.totalWithdrawBank
-                              ,
+                            const SizedBox(
+                              width: 20,
+                            ),
+                            Expanded(
+                                child: TextFormField(
+                              controller: endTimeController,
+                              onTap: () async {
+                                selectedEndDate = await showDatePicker(
+                                    context: context,
+                                    initialDate: DateTime.now(),
+                                    firstDate: DateTime(2020),
+                                    lastDate: DateTime(2025));
+                                if (selectedEndDate != null) {
+                                  endTimeController.text =
+                                      DateFormat("dd-MM-yyyy")
+                                          .format(selectedEndDate!)
+                                          .toString();
+                                  // setState(() {});
+                                }
+                              },
+
+                              validator: (value) {
+                                if (selectedEndDate == null) {
+                                  return "field is required";
+                                }
+                                return null;
+                              },
+
+                              decoration: const InputDecoration(
+                                  labelText: "End Date",
+                                  hintText: "End Date",
+                                  border: OutlineInputBorder(),
+                                  focusedBorder: OutlineInputBorder(),
+                                  disabledBorder: OutlineInputBorder(),
+                                  enabledBorder: OutlineInputBorder(),
+                                  isDense: true),
+                              maxLines: 1,
+                              readOnly: true,
+                              // enabled: false,
                             ))
+                          ],
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        TextFormField(
+                          controller: searchController,
+                          decoration: const InputDecoration(
+                            labelText: "Search",
+                            hintText: "Search",
+                            border: OutlineInputBorder(),
+                            focusedBorder: OutlineInputBorder(),
+                            disabledBorder: OutlineInputBorder(),
+                            enabledBorder: OutlineInputBorder(),
+                            isDense: true,
+                          ),
+                          maxLines: 1,
+                          // enabled: false,
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        FutureBuilder(
+                            future: FirebaseFirestore.instance
+                                .collection(Collections.categories)
+                                .orderBy('createdAt')
+                                .get(),
+                            builder: (context,
+                                AsyncSnapshot<
+                                        QuerySnapshot<Map<String, dynamic>>>
+                                    snapshot) {
+                              final Map<String, Color> colorsMap = {};
+                              List<String> stringCategories = [];
+                              if ((snapshot.hasData) &&
+                                  (!(snapshot.connectionState ==
+                                      ConnectionState.waiting))) {
+                                List<CategoryModel> categories = snapshot
+                                    .data!.docs
+                                    .map((DocumentSnapshot<Map<String, dynamic>>
+                                            document) =>
+                                        CategoryModel.fromMap(document.data()!))
+                                    .toList();
+                                categories = reorderList(categories);
+                                stringCategories =
+                                    categories.map((c) => c.title).toList();
+                                stringCategories.insert(0, "All Categories");
+
+                                for (var category in categories) {
+                                  colorsMap[category.title] =
+                                      Color(category.colorCode).withOpacity(1);
+                                }
+                              }
+
+                              return MyDropDownButton(
+                                dropdownValue: selectedCategory,
+                                items: stringCategories,
+                                function: (String v) {
+                                  selectedCategory = v;
+                                },
+                                hintText: "Select Category",
+                                colorsMap: colorsMap,
+                              );
+                            }),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        MyDropDownButton(
+                          dropdownValue: selectedPaymentMode,
+                          items: const [
+                            'All Payment Modes',
+                            'cash',
+                            'card',
+                            'bank'
+                          ],
+                          function: (String v) {
+                            selectedPaymentMode = v;
+                          },
+                          hintText: "Select Payment Mode",
+                        ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        buttonsRow(),
+                        const SizedBox(height: 10),
+                        Builder(
+                            builder: (context,) {
+
+                              return Row(
+                                children: [
+                                  Expanded(
+                                      child: amountContainer(
+                                    "Cash",
+                                    amountController.totalAmountCash,
+                                    amountController.totalAddedCash,
+                                    amountController.totalWithdrawCash,
+                                  )),
+                                  const SizedBox(
+                                    width: 15,
+                                  ),
+                                  Expanded(
+                                      child: amountContainer(
+                                    "Card",
+                                    amountController.totalAmountCard,
+                                    amountController.totalAddedCard,
+                                    amountController.totalWithdrawCard,
+                                  )),
+                                  const SizedBox(
+                                    width: 15,
+                                  ),
+                                  Expanded(
+                                      child: amountContainer(
+                                    "Bank",
+                                    amountController.totalAmountBank,
+                                    amountController.totalAddedBank,
+                                    amountController.totalWithdrawBank,
+                                  ))
+                                ],
+                              );
+                            }),
+                        const SizedBox(
+                          height: 20,
+                        ),
                       ],
-                    );
-                  }
-              ),
-              const SizedBox(
-                height: 20,
-              ),
-            ],
-          ),
-        )),
+                    ),
+            )),
         Padding(
           padding: const EdgeInsets.symmetric(horizontal: 18.0),
           child: Row(
             mainAxisAlignment: MainAxisAlignment.spaceBetween,
             children: [
               InkWell(
-                onTap: (){
+                onTap: () {
                   setState(() {
-                    if(selectedSign == '+'){
+                    if (selectedSign == '+') {
                       selectedSign = 'both';
-                    }
-                    else{
+                    } else {
                       selectedSign = '+';
-
                     }
-
-
                   });
                 },
                 child: Container(
                     decoration: BoxDecoration(
-                      color: selectedSign == '+' ? Colors.green : null,
-                      shape: BoxShape.circle,
-                      border: Border.all(color: Colors.black,width: 1)
-
-                    ),
-                    padding: EdgeInsets.all(7.5),
-                    child: Icon(Icons.add, color: selectedSign == '+' ? Colors.white : Colors.green,)),
+                        color: selectedSign == '+' ? Colors.green : null,
+                        shape: BoxShape.circle,
+                        border: Border.all(color: Colors.black, width: 1)),
+                    padding: const EdgeInsets.all(7.5),
+                    child: Icon(
+                      Icons.add,
+                      color: selectedSign == '+' ? Colors.white : Colors.green,
+                    )),
               ),
-              Text("Recent Transactions",
+              const Text("Recent Transactions",
                   style: TextStyle(
                       color: Colors.black,
                       fontSize: 16,
                       fontWeight: FontWeight.bold)),
               InkWell(
-                onTap: (){
+                onTap: () {
                   setState(() {
-                    if(selectedSign == '-'){
+                    if (selectedSign == '-') {
                       selectedSign = 'both';
-                    }
-                    else{
+                    } else {
                       selectedSign = '-';
-
                     }
-
-
                   });
                 },
                 child: Container(
                     decoration: BoxDecoration(
                         color: selectedSign == '-' ? Colors.red : null,
                         shape: BoxShape.circle,
-                        border: Border.all(color: Colors.black,width: 1)
-
-                    ),
-                    padding: EdgeInsets.all(7.5),
-                    child: Icon(Icons.remove, color: selectedSign == '-' ? Colors.white : Colors.red,)),
-              )            ],
+                        border: Border.all(color: Colors.black, width: 1)),
+                    padding: const EdgeInsets.all(7.5),
+                    child: Icon(
+                      Icons.remove,
+                      color: selectedSign == '-' ? Colors.white : Colors.red,
+                    )),
+              )
+            ],
           ),
         ),
         const SizedBox(
           height: 10,
         ),
-
       ],
     );
   }
 
-  bool matchFilters(TransactionModel transaction){
+  bool matchFilters(TransactionModel transaction) {
     return ((transaction.category == selectedCategory) ||
-        selectedCategory.toLowerCase() ==
-            'all categories') &&
-        ((transaction.transactionType ==
-            selectedPaymentMode) ||
-            selectedPaymentMode!.toLowerCase() ==
-                'all payment modes')
-        && (transaction.desc.toLowerCase().contains(searchController.text.toLowerCase()) || transaction.category.toLowerCase().contains(searchController.text.toLowerCase()))
-        && (transaction.transactionSign == selectedSign || selectedSign == 'both' );
+            selectedCategory.toLowerCase() == 'all categories') &&
+        ((transaction.transactionType == selectedPaymentMode) ||
+            selectedPaymentMode!.toLowerCase() == 'all payment modes') &&
+        (transaction.desc
+                .toLowerCase()
+                .contains(searchController.text.toLowerCase()) ||
+            transaction.category
+                .toLowerCase()
+                .contains(searchController.text.toLowerCase())) &&
+        (transaction.transactionSign == selectedSign || selectedSign == 'both');
   }
 }

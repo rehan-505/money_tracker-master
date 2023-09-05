@@ -44,15 +44,19 @@ class _TransactionCardState extends State<TransactionCard> {
               Row(
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children:  [
-                  Text("${widget.transactionModel.createdBy.name.capitalizeFirst!} has ${ (widget.transactionModel.transactionSign == '+') ? "added" : "withdrawn"} ${widget.transactionModel.amount}", style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold,fontSize: 16),),
+                  SizedBox(
+                      width: Get.width/2,
+                      child: Text("${widget.transactionModel.createdBy.name.capitalizeFirst!} has ${ (widget.transactionModel.transactionSign == '+') ? "added" : "withdrawn"} ${widget.transactionModel.amount}", style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold,fontSize: 16),)),
                   // const Spacer(),
-                  Row(
-                    mainAxisSize: MainAxisSize.min,
-                    children: [
-                      Text(widget.transactionModel.transactionType.capitalizeFirst!,style: const TextStyle(fontSize: 16, )),
-                      const SizedBox(width: 10,),
-                      Flexible(child: Text("${widget.transactionModel.transactionSign} ${(widget.transactionModel.amount/widget.transactionModel.amount.toInt())==1 ? widget.transactionModel.amount.toInt() : widget.transactionModel.amount }", style: TextStyle(color: widget.transactionModel.transactionSign=="+" ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 20),)),
-                    ],
+                  Flexible(
+                    child: Row(
+                      mainAxisSize: MainAxisSize.min,
+                      children: [
+                        Text(widget.transactionModel.transactionType.capitalizeFirst!,style: const TextStyle(fontSize: 16, )),
+                        const SizedBox(width: 10,),
+                        Flexible(child: Text("${widget.transactionModel.transactionSign} ${(widget.transactionModel.amount/widget.transactionModel.amount.toInt())==1 ? widget.transactionModel.amount.toInt() : widget.transactionModel.amount }", style: TextStyle(color: widget.transactionModel.transactionSign=="+" ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 20),)),
+                      ],
+                    ),
                   ),
                 ],
               ),
@@ -63,7 +67,9 @@ class _TransactionCardState extends State<TransactionCard> {
                 mainAxisSize: MainAxisSize.max,
                 // mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children: [
-                  Text("Note : ${widget.transactionModel.desc}"),
+                  SizedBox(
+                      width: Get.width*0.6,
+                      child: Text("Note : ${(widget.transactionModel.desc)}")),
                   const Spacer(),
                   isAdmin ? Padding(
                     padding: const EdgeInsets.only(right: 16.0),

@@ -1,9 +1,11 @@
 import 'dart:io';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:cross_file/cross_file.dart';
+import 'package:device_info_plus/device_info_plus.dart';
+import 'package:flutter_cached_pdfview/flutter_cached_pdfview.dart';
 import 'package:fluttertoast/fluttertoast.dart';
-import 'package:get/get.dart';
 import 'package:money_tracker/models/transaction.dart';
-import 'package:native_pdf_view/native_pdf_view.dart' as nv;
+// import 'package:native_pdf_view/native_pdf_view.dart' as nv;
 import 'package:flutter/material.dart';
 import 'package:intl/intl.dart';
 import 'package:path_provider/path_provider.dart';
@@ -24,8 +26,8 @@ class ExportDataScreen extends StatefulWidget {
 }
 
 class _ExportDataScreenState extends State<ExportDataScreen> {
-  TextEditingController startDateController = new TextEditingController();
-  TextEditingController endDateController = new TextEditingController();
+  TextEditingController startDateController = TextEditingController();
+  TextEditingController endDateController = TextEditingController();
 
   final pw.Document pdf = pw.Document();
 
@@ -33,7 +35,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
 
   String? pdfPath;
 
-  nv.PdfController? pdfController;
+  // nv.PdfController? pdfController;
 
   List<TransactionModel> transactionsList = [];
 
@@ -235,12 +237,12 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
                 ),
               ),
 
-              pdfController != null ? Expanded(child: Container(
+              pdfPath != null ? Expanded(child: Container(
                   color: Colors.blue,
-                  child: pdfView())) : const SizedBox(),
-              pdfController != null ? ElevatedButton(
+                  child: pdfView(pdfPath!))) : const SizedBox(),
+              pdfPath != null ? ElevatedButton(
                   onPressed: ()async{
-                    Share.shareFiles([pdfPath!,], text: 'Kitaab Transactions');
+                    Share.shareXFiles([XFile(pdfPath!),], text: 'Kitaab Transactions');
                   },
                   child: const Text(
                       "Share PDF"
@@ -374,13 +376,22 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
   _exportPdf() async {
     bool success = false;
 
-    if ((await Permission.storage.request().isGranted)) {
-      // if (await Permission.accessMediaLocation.request().isGranted){
-      //   if((await Permission.manageExternalStorage.request().isGranted)) {
-      success = true;
-      //   }
-      // }
+    if (await DeviceInfoPlugin().androidInfo.then((value) => value.version.sdkInt) < 33){
+      if ((await Permission.storage.request().isGranted)) {
+        // if (await Permission.accessMediaLocation.request().isGranted){
+        //   if((await Permission.manageExternalStorage.request().isGranted)) {
+        success = true;
+        //   }
+        // }
+      }
     }
+    else {
+      ///For sdk 33 or greater
+      if(await Permission.manageExternalStorage.request().isGranted){
+        success = true;
+      }
+    }
+
 
     if (!success) {
       Fluttertoast.showToast(msg: "Permission not granted");
@@ -465,9 +476,9 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
     print(file.path);
     print(updatedFile.absolute.path);
 
-    pdfController = nv.PdfController(
-      document: nv.PdfDocument.openFile(file.path),
-    );
+    // pdfController = nv.PdfController(
+    //   document: nv.PdfDocument.openFile(file.path),
+    // );
 
     setState(() {
       pdfPath = file.path;
@@ -475,12 +486,34 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
     });
   }
 
-  Widget pdfView() => nv.PdfView(
-        controller: pdfController!,
-        scrollDirection: Axis.vertical,
-        pageLoader: const SizedBox(
-            height: 20, child: Center(child: CircularProgressIndicator())),
-      );
+  // Widget pdfView() => nv.PdfView(
+  //       controller: pdfController!,
+  //       scrollDirection: Axis.vertical,
+  //       pageLoader: const SizedBox(
+  //           height: 20, child: Center(child: CircularProgressIndicator())),
+  //     );
+
+  Widget pdfView(String pdfPath) {
+
+    print('pdf path is $pdfPath');
+    print('into pdf view');
+    return PDF(
+
+      enableSwipe: true,
+      swipeHorizontal: true,
+      autoSpacing: false,
+      pageFling: false,
+      onError: (error) {
+        print(error.toString());
+      },
+      onPageError: (page, error) {
+        print('$page: ${error.toString()}');
+      },
+      onPageChanged: (int? page, int? total) {
+        print('page change: $page/$total');
+      },
+    ).fromPath(pdfPath);
+  }
 
 
   pw.Widget amountContainer(
@@ -502,8 +535,8 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
             ),
             pw.Text(
               amount,
-              style:  pw.TextStyle(
-                  color: const PdfColor(0, 0, 1),
+              style:  const pw.TextStyle(
+                  color: PdfColor(0, 0, 1),
                   fontSize: 18,
               ),
             ),
@@ -558,7 +591,7 @@ class _ExportDataScreenState extends State<ExportDataScreen> {
 
   @override
   void dispose(){
-    pdfController?.dispose();
+    // pdfController?.dispose();
     startTimeController.dispose();
     endTimeController.dispose();
     super.dispose();

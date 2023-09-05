@@ -1,14 +1,12 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
 import 'package:money_tracker/models/transaction.dart';
-import 'package:money_tracker/utils/collection_names.dart';
 import 'package:money_tracker/widgets/transaction_card.dart';
 import '../controllers/transaction_screen_amount_controller.dart';
-import '../utils/global_constants.dart';
 import '../utils/global_functions.dart';
 
 class SearchScreen extends StatefulWidget {
-  const SearchScreen({Key? key}) : super(key: key);
+  const SearchScreen({Key? key, required this.transactions}) : super(key: key);
+  final List<TransactionModel> transactions;
 
   @override
   State<SearchScreen> createState() => _SearchScreenState();
@@ -22,10 +20,19 @@ class _SearchScreenState extends State<SearchScreen> {
       TransactionScreenAmountController();
 
   String selectedSign = 'both';
+  List<TransactionModel> transactions = [];
 
+  @override
+  void initState() {
+    transactions = List.from(widget.transactions);
+    amountController.reset();
+    setContainerAmounts(widget.transactions);
+    super.initState();
+  }
 
   @override
   Widget build(BuildContext context) {
+
     return Scaffold(
       appBar: AppBar(
         title: TextFormField(
@@ -37,7 +44,7 @@ class _SearchScreenState extends State<SearchScreen> {
             return null;
           },
           onChanged: (v) {
-            setState(() {});
+            filterOut();
           },
           // controller: searchController,
           decoration: InputDecoration(
@@ -60,7 +67,7 @@ class _SearchScreenState extends State<SearchScreen> {
             ),
           ),
           cursorColor: Colors.white,
-          style: TextStyle(color: Colors.white),
+          style: const TextStyle(color: Colors.white),
         ),
       ),
       body: Padding(
@@ -74,17 +81,7 @@ class _SearchScreenState extends State<SearchScreen> {
                 children: [
                   InkWell(
                     onTap: (){
-                      setState(() {
-                        if(selectedSign == '+'){
-                          selectedSign = 'both';
-                        }
-                        else{
-                          selectedSign = '+';
-
-                        }
-
-
-                      });
+                      onSignSelection('+');
                     },
                     child: Container(
                         decoration: BoxDecoration(
@@ -96,24 +93,14 @@ class _SearchScreenState extends State<SearchScreen> {
                         padding: EdgeInsets.all(7.5),
                         child: Icon(Icons.add, color: selectedSign == '+' ? Colors.white : Colors.green,)),
                   ),
-                  Text("Recent Transactions",
+                  const Text("Recent Transactions",
                       style: TextStyle(
                           color: Colors.black,
                           fontSize: 16,
                           fontWeight: FontWeight.bold)),
                   InkWell(
                     onTap: (){
-                      setState(() {
-                        if(selectedSign == '-'){
-                          selectedSign = 'both';
-                        }
-                        else{
-                          selectedSign = '-';
-
-                        }
-
-
-                      });
+                      onSignSelection('-');
                     },
                     child: Container(
                         decoration: BoxDecoration(
@@ -127,106 +114,57 @@ class _SearchScreenState extends State<SearchScreen> {
                   )            ],
               ),
             ),
-            FutureBuilder(
-                future: FirebaseFirestore.instance
-                    .collection(Collections.transactions)
-                    .orderBy("createdAt", descending: true)
-                    .get(),
-                builder: (context,
-                    AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
-                        snapshot) {
-                  amountController.reset();
-                  if (snapshot.hasData &&
-                      (!(snapshot.connectionState ==
-                          ConnectionState.waiting))) {
-
-                    for (int i = 0; i < snapshot.data!.docs.length; i++) {
-                      TransactionModel transaction = TransactionModel.fromMap(
-                          snapshot.data!.docs[i].data());
-                      if (matchFilters(transaction)) {
-                        setAmounts(transaction);
-                      }
-                    }
-                  }
-
-                  return Row(
-                    children: [
-                      Expanded(
-                          child: amountContainer(
-                            "Cash",
-                            amountController.totalAmountCash,
-                            amountController.totalAddedCash,
-                            amountController.totalWithdrawCash
-                            ,
-                          )),
-                      const SizedBox(
-                        width: 15,
-                      ),
-                      Expanded(
-                          child: amountContainer(
-                            "Card",
-                            amountController.totalAmountCard,
-                            amountController.totalAddedCard,
-                            amountController.totalWithdrawCard
-                            ,
-                          )),
-                      const SizedBox(
-                        width: 15,
-                      ),
-                      Expanded(
-                          child: amountContainer(
-                            "Bank",
-                            amountController.totalAmountBank,
-                            amountController.totalAddedBank,
-                            amountController.totalWithdrawBank
-                            ,
-                          ))
-                    ],
-                  );
-                }),
+            Row(
+              children: [
+                Expanded(
+                    child: amountContainer(
+                      "Cash",
+                      amountController.totalAmountCash,
+                      amountController.totalAddedCash,
+                      amountController.totalWithdrawCash
+                      ,
+                    )),
+                const SizedBox(
+                  width: 15,
+                ),
+                Expanded(
+                    child: amountContainer(
+                      "Card",
+                      amountController.totalAmountCard,
+                      amountController.totalAddedCard,
+                      amountController.totalWithdrawCard
+                      ,
+                    )),
+                const SizedBox(
+                  width: 15,
+                ),
+                Expanded(
+                    child: amountContainer(
+                      "Bank",
+                      amountController.totalAmountBank,
+                      amountController.totalAddedBank,
+                      amountController.totalWithdrawBank
+                      ,
+                    ))
+              ],
+            ),
             const SizedBox(height: 20,),
             Expanded(
-              child: FutureBuilder(
-                  future: FirebaseFirestore.instance
-                      .collection(Collections.transactions)
-                      .orderBy("createdAt", descending: true)
-                      .get(),
-                  builder: (context,
-
-                      AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
-                          snapshot) {
-                    if (!snapshot.hasData) {
-                      return const Center(
-                        child: Text("No Transactions to show"),
-                      );
-                    }
-
-                    if (snapshot.connectionState == ConnectionState.waiting) {
-                      return const Center(
-                        child: Text("Loading Transactions"),
-                      );
-                    }
-
-                    if (snapshot.data!.docs.isEmpty) {
+              child: Builder(
+                  builder: (context,) {
+                    if (transactions.isEmpty) {
                       return const Center(
                         child: Text("No Transactions to show"),
                       );
                     }
 
                     return ListView.builder(
-                        itemCount: isAdmin ? snapshot.data!.size : 10,
+                        itemCount: transactions.length,
                         itemBuilder: (context, index) {
-                          TransactionModel transaction =
-                              TransactionModel.fromMap(
-                                  snapshot.data!.docs[index].data());
+                          TransactionModel transaction = transactions[index];
 
-                          if (matchFilters(transaction)                          ) {
                             return TransactionCard(
                                 transactionModel: transaction);
-                          }
-                          print("false");
-                          return SizedBox();
-
                         });
                   }),
             ),
@@ -236,35 +174,44 @@ class _SearchScreenState extends State<SearchScreen> {
     );
   }
 
-  void setAmounts(TransactionModel transaction) {
-    if (transaction.transactionSign == '+') {
-      if (transaction.transactionType == 'cash') {
-        amountController.totalAmountCash = transaction.amount + amountController.totalAmountCash;
-        amountController.totalAddedCash = transaction.amount + amountController.totalAddedCash;
-      }
-      else if (transaction.transactionType=='bank'){
-        amountController.totalAmountBank = amountController.totalAmountBank + transaction.amount;
-        amountController.totalAddedBank = transaction.amount + amountController.totalAddedBank;
-      }
-
-      else {
-        amountController.totalAmountCard = amountController.totalAmountCard + transaction.amount;
-        amountController.totalAddedCard = transaction.amount + amountController.totalAddedCard;
-      }
-    } else if (transaction.transactionSign == '-') {
-      if (transaction.transactionType == 'cash') {
-        amountController.totalAmountCash = amountController.totalAmountCash - transaction.amount;
-        amountController.totalWithdrawCash = transaction.amount + amountController.totalWithdrawCash;
-      }
-      else if (transaction.transactionType=='bank'){
-        amountController.totalAmountBank = amountController.totalAmountBank - transaction.amount;
-        amountController.totalWithdrawBank = transaction.amount + amountController.totalWithdrawBank;
-      }
-
-
-      else {
-        amountController.totalAmountCard = amountController.totalAmountCard - transaction.amount;
-        amountController.totalWithdrawCard = transaction.amount + amountController.totalWithdrawCard;
+  void setContainerAmounts(List<TransactionModel> transactionsList) {
+    amountController.reset();
+    for (int i = 0; i < transactionsList.length; i++){
+      TransactionModel transaction = transactionsList[i];
+      if (transaction.transactionSign == '+') {
+        if (transaction.transactionType == 'cash') {
+          amountController.totalAmountCash =
+              transaction.amount + amountController.totalAmountCash;
+          amountController.totalAddedCash =
+              transaction.amount + amountController.totalAddedCash;
+        } else if (transaction.transactionType == 'bank') {
+          amountController.totalAmountBank =
+              amountController.totalAmountBank + transaction.amount;
+          amountController.totalAddedBank =
+              transaction.amount + amountController.totalAddedBank;
+        } else {
+          amountController.totalAmountCard =
+              amountController.totalAmountCard + transaction.amount;
+          amountController.totalAddedCard =
+              transaction.amount + amountController.totalAddedCard;
+        }
+      } else if (transaction.transactionSign == '-') {
+        if (transaction.transactionType == 'cash') {
+          amountController.totalAmountCash =
+              amountController.totalAmountCash - transaction.amount;
+          amountController.totalWithdrawCash =
+              transaction.amount + amountController.totalWithdrawCash;
+        } else if (transaction.transactionType == 'bank') {
+          amountController.totalAmountBank =
+              amountController.totalAmountBank - transaction.amount;
+          amountController.totalWithdrawBank =
+              transaction.amount + amountController.totalWithdrawBank;
+        } else {
+          amountController.totalAmountCard =
+              amountController.totalAmountCard - transaction.amount;
+          amountController.totalWithdrawCard =
+              transaction.amount + amountController.totalWithdrawCard;
+        }
       }
     }
   }
@@ -289,6 +236,32 @@ class _SearchScreenState extends State<SearchScreen> {
         ||
         ( transaction.amount.toString().contains(searchController.text)  );
 
+  }
+
+  void filterOut(){
+    transactions = widget.transactions.where((element) => matchFilters(element)).toList();
+    setContainerAmounts(transactions);
+    setState(() {});
+  }
+
+  void onSignSelection(String sign){
+
+    if(selectedSign!='both' && selectedSign!=sign){
+      selectedSign=sign;
+      filterOut();
+      return;
+    }
+
+    if(selectedSign==sign){
+      selectedSign='both';
+      filterOut();
+      return;
+    }
+
+    selectedSign = sign;
+    transactions.removeWhere((element) => element.transactionSign != selectedSign);
+    // setContainerAmounts(transactions);
+    setState(() {});
   }
 
 }

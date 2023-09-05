@@ -43,12 +43,15 @@ dependencies:
 #  native_pdf_view: ^6.0.0+1
   path: ^1.8.0
   path_provider: ^2.0.11
-#  flutter_share: ^2.0.0
+  flutter_share: ^2.0.0
   share_plus: ^4.0.10
   fluttertoast: ^8.0.9
   flex_color_picker: ^3.0.0
   firebase_core_platform_interface: ^4.8.0
-
+  flutter_cached_pdfview: ^0.4.2
+  cross_file: ^0.3.3+5
+  firebase_pagination: ^3.0.0
+  device_info_plus: ^9.0.3
 
 
 

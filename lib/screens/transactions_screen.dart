@@ -3,6 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker/controllers/filters_collapse_controller.dart';
+import 'package:money_tracker/controllers/transaction_controller.dart';
 import 'package:money_tracker/models/transaction.dart';
 import 'package:money_tracker/screens/search_screen.dart';
 import 'package:money_tracker/utils/collection_names.dart';
@@ -12,49 +13,77 @@ import '../models/category.dart';
 import '../utils/global_functions.dart';
 import '../widgets/dropdown_button.dart';
 
-class TransactionsScreen extends StatefulWidget {
-  const TransactionsScreen({Key? key}) : super(key: key);
+class TransactionsScreen extends StatelessWidget {
+  TransactionsScreen({Key? key}) : super(key: key);
 
-  @override
-  State<TransactionsScreen> createState() => _TransactionsScreenState();
-}
-
-class _TransactionsScreenState extends State<TransactionsScreen> {
-  DateTime? selectedStartDate;
-  DateTime? selectedEndDate;
-  String selectedCategory = "All Categories";
-
-  final TransactionScreenAmountController amountController =
-      TransactionScreenAmountController();
-
-  final FiltersCollapseController collapseController =
-      FiltersCollapseController();
-
-  String? selectedPaymentMode = 'All Payment Modes';
-
-  String selectedSign = 'both';
-
-  final GlobalKey<FormState> formKey = GlobalKey<FormState>();
-
-  final TextEditingController startTimeController = TextEditingController();
-
-  final TextEditingController endTimeController = TextEditingController();
-
-  final TextEditingController searchController = TextEditingController();
-
-  List<TransactionModel> transactions = [];
-  List<TransactionModel> allTransactions = [];
-  bool firstFetch = true;
+  final TransactionController transactionController = Get.put(TransactionController());
 
   @override
   Widget build(BuildContext context) {
+    return StreamBuilder(
+        stream: FirebaseFirestore.instance
+            .collection(Collections.transactions)
+            .orderBy("createdAt", descending: true)
+            .snapshots(),
+        builder: (context,
+            AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
+          debugPrint('transactions upper stream builder: ${snapshot.connectionState}');
+          if (snapshot.connectionState == ConnectionState.waiting || !(snapshot.hasData)) {
+            return Scaffold(
+              appBar: AppBar(
+                title: const Text('Kitaab'),
+              ),
+              body:  Center(
+                child: snapshot.hasError ? const Text('Something went wrong') : const CircularProgressIndicator(),
+              ),
+            );
+          }
+
+         transactionController.allTransactions.value = (snapshot.data?.docs ?? [])
+              .map((e) => TransactionModel.fromMap(e.data()))
+              .toList();
+          transactionController.filterList();
+          print('total transactions before filtering: ${transactionController.allTransactions.length}');
+
+          return TransactionBodyScreen();
+        });
+  }
+}
+
+
+class TransactionBodyScreen extends StatefulWidget {
+  const TransactionBodyScreen({Key? key,}) : super(key: key);
+
+  @override
+  State<TransactionBodyScreen> createState() => _TransactionBodyScreenState();
+}
+
+class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
+
+  final TransactionController transactionController = Get.find();
+
+  bool showAll = true;
+
+  // bool firstFetch = true;
+
+  @override
+  void initState() {
+    // transactions = List.from(transactionController.allTransactions);
+    // setContainerAmounts(transactionController.allTransactions);
+    super.initState();
+  }
+
+  @override
+  Widget build(BuildContext context) {
+
+    // setContainerAmounts(transactions);
     // print(amountController.totalAmountCard);
     // amountController.reset();
     return Scaffold(
       appBar: AppBar(title: const Text("Kitaab"), centerTitle: true, actions: [
         InkWell(
           onTap: () {
-            Get.to(SearchScreen(transactions: allTransactions,));
+            Get.to(SearchScreen(transactions: transactionController.allTransactions,));
           },
           child: const Icon(
             Icons.search,
@@ -68,50 +97,14 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Form(
-          key: formKey,
-          child: StreamBuilder(
-              stream: (selectedStartDate == null || selectedEndDate == null)
-                  ? FirebaseFirestore.instance
-                      .collection(Collections.transactions)
-                      .orderBy("createdAt", descending: true)
-                      .snapshots()
-                  : FirebaseFirestore.instance
-                      .collection(Collections.transactions)
-                      .where("createdAt",
-                          isGreaterThanOrEqualTo: selectedStartDate,
-                          isLessThanOrEqualTo: selectedEndDate)
-                      .orderBy("createdAt", descending: true)
-                      .snapshots(),
-              builder: (context,
-                  AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
-                if (snapshot.connectionState == ConnectionState.waiting) {
-                  return const Center(
-                    child: CircularProgressIndicator(),
-                  );
-                }
-
-                transactions = (snapshot.data?.docs ?? [])
-                    .map((e) => TransactionModel.fromMap(e.data()))
-                    .toList();
-                print('total transactions before filtering: ${transactions.length}');
-
-                if(transactions.isNotEmpty && firstFetch){
-                  allTransactions = List.from(transactions);
-                  firstFetch = false;
-                }
-
-                transactions = transactions.where((element) => matchFilters(element)).toList();
-
-                amountController.reset();
-                setContainerAmounts(transactions);
-                return _buildShowTransactionsList(transactions);
-              }),
+          key: transactionController.formKey,
+          child: _buildTransactionsList(transactionController.filteredTransactions),
         ),
       ),
     );
   }
 
-  Widget _buildShowTransactionsList(List<TransactionModel> transactionsList){
+  Widget _buildTransactionsList(List<TransactionModel> transactionsList){
 
     print('total transactions after filtering: ${transactionsList.length}');
 
@@ -139,47 +132,6 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         });
   }
 
-  void setContainerAmounts(List<TransactionModel> transactionsList) {
-    for (int i = 0; i < transactionsList.length; i++){
-      TransactionModel transaction = transactionsList[i];
-      if (transaction.transactionSign == '+') {
-        if (transaction.transactionType == 'cash') {
-          amountController.totalAmountCash =
-              transaction.amount + amountController.totalAmountCash;
-          amountController.totalAddedCash =
-              transaction.amount + amountController.totalAddedCash;
-        } else if (transaction.transactionType == 'bank') {
-          amountController.totalAmountBank =
-              amountController.totalAmountBank + transaction.amount;
-          amountController.totalAddedBank =
-              transaction.amount + amountController.totalAddedBank;
-        } else {
-          amountController.totalAmountCard =
-              amountController.totalAmountCard + transaction.amount;
-          amountController.totalAddedCard =
-              transaction.amount + amountController.totalAddedCard;
-        }
-      } else if (transaction.transactionSign == '-') {
-        if (transaction.transactionType == 'cash') {
-          amountController.totalAmountCash =
-              amountController.totalAmountCash - transaction.amount;
-          amountController.totalWithdrawCash =
-              transaction.amount + amountController.totalWithdrawCash;
-        } else if (transaction.transactionType == 'bank') {
-          amountController.totalAmountBank =
-              amountController.totalAmountBank - transaction.amount;
-          amountController.totalWithdrawBank =
-              transaction.amount + amountController.totalWithdrawBank;
-        } else {
-          amountController.totalAmountCard =
-              amountController.totalAmountCard - transaction.amount;
-          amountController.totalWithdrawCard =
-              transaction.amount + amountController.totalWithdrawCard;
-        }
-      }
-    }
-  }
-
   Widget buttonsRow() {
     return Column(
       mainAxisSize: MainAxisSize.min,
@@ -191,8 +143,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                     onPressed: () {
                       // if (formKey.currentState!.validate()) {
                       // }
-
-                      amountController.reset();
+                      transactionController.filterList();
                       setState(() {});
                     },
                     child: const Text("Apply"))),
@@ -202,12 +153,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             Expanded(
               child: ElevatedButton(
                   onPressed: () {
-                    selectedEndDate = null;
-                    selectedStartDate = null;
-                    startTimeController.text = '';
-                    endTimeController.text = '';
-                    selectedCategory = 'All Categories';
-                    selectedPaymentMode = 'All Payment Modes';
+                    transactionController.resetFilters();
                     setState(() {});
                   },
                   child: const Text("Reset")),
@@ -220,7 +166,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
     );
   }
 
-  _buildUpperArea() {
+  Widget _buildUpperArea() {
 
     // return SizedBox();
 
@@ -231,12 +177,12 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
         Obx(() => InkWell(
               onTap: () {
-                collapseController.collapse.value =
-                    !collapseController.collapse.value;
+                transactionController.collapseController.collapse.value =
+                    !transactionController.collapseController.collapse.value;
               },
               child: Row(
                 children: [
-                  Text(collapseController.collapse.value
+                  Text(transactionController.collapseController.collapse.value
                       ? "Expand Filters"
                       : "Collapse Filters"),
                   const Icon(Icons.arrow_drop_down_sharp),
@@ -244,7 +190,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
               ),
             )),
         Obx(() => Container(
-              child: collapseController.collapse.value
+              child: transactionController.collapseController.collapse.value
                   ? const SizedBox()
                   : Column(
                       mainAxisSize: MainAxisSize.min,
@@ -256,24 +202,24 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           children: [
                             Expanded(
                                 child: TextFormField(
-                              controller: startTimeController,
+                              controller: transactionController.startTimeController,
                               onTap: () async {
-                                selectedStartDate = await showDatePicker(
+                                transactionController.selectedStartDate = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(2020),
                                     lastDate: DateTime(2025));
-                                if (selectedStartDate != null) {
-                                  startTimeController.text =
+                                if (transactionController.selectedStartDate != null) {
+                                  transactionController.startTimeController.text =
                                       DateFormat("dd-MM-yyyy")
-                                          .format(selectedStartDate!)
+                                          .format(transactionController.selectedStartDate!)
                                           .toString();
                                   // setState(() {});
                                 }
                               },
 
                               validator: (value) {
-                                if (selectedStartDate == null) {
+                                if (transactionController.selectedStartDate == null) {
                                   return "field is required";
                                 }
                                 return null;
@@ -296,24 +242,24 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             ),
                             Expanded(
                                 child: TextFormField(
-                              controller: endTimeController,
+                              controller: transactionController.endTimeController,
                               onTap: () async {
-                                selectedEndDate = await showDatePicker(
+                                transactionController.selectedEndDate = await showDatePicker(
                                     context: context,
                                     initialDate: DateTime.now(),
                                     firstDate: DateTime(2020),
                                     lastDate: DateTime(2025));
-                                if (selectedEndDate != null) {
-                                  endTimeController.text =
+                                if (transactionController.selectedEndDate != null) {
+                                  transactionController.endTimeController.text =
                                       DateFormat("dd-MM-yyyy")
-                                          .format(selectedEndDate!)
+                                          .format(transactionController.selectedEndDate!)
                                           .toString();
                                   // setState(() {});
                                 }
                               },
 
                               validator: (value) {
-                                if (selectedEndDate == null) {
+                                if (transactionController.selectedEndDate == null) {
                                   return "field is required";
                                 }
                                 return null;
@@ -337,7 +283,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           height: 10,
                         ),
                         TextFormField(
-                          controller: searchController,
+                          controller: transactionController.searchController,
                           decoration: const InputDecoration(
                             labelText: "Search",
                             hintText: "Search",
@@ -353,11 +299,11 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         const SizedBox(
                           height: 10,
                         ),
-                        FutureBuilder(
-                            future: FirebaseFirestore.instance
+                        StreamBuilder(
+                            stream: FirebaseFirestore.instance
                                 .collection(Collections.categories)
                                 .orderBy('createdAt')
-                                .get(),
+                                .snapshots(),
                             builder: (context,
                                 AsyncSnapshot<
                                         QuerySnapshot<Map<String, dynamic>>>
@@ -385,10 +331,10 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                               }
 
                               return MyDropDownButton(
-                                dropdownValue: selectedCategory,
+                                dropdownValue: transactionController.selectedCategory,
                                 items: stringCategories,
                                 function: (String v) {
-                                  selectedCategory = v;
+                                  transactionController.selectedCategory = v;
                                 },
                                 hintText: "Select Category",
                                 colorsMap: colorsMap,
@@ -398,7 +344,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                           height: 10,
                         ),
                         MyDropDownButton(
-                          dropdownValue: selectedPaymentMode,
+                          dropdownValue: transactionController.selectedPaymentMode,
                           items: const [
                             'All Payment Modes',
                             'cash',
@@ -406,7 +352,7 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                             'bank'
                           ],
                           function: (String v) {
-                            selectedPaymentMode = v;
+                            transactionController.selectedPaymentMode = v;
                           },
                           hintText: "Select Payment Mode",
                         ),
@@ -415,41 +361,37 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                         ),
                         buttonsRow(),
                         const SizedBox(height: 10),
-                        Builder(
-                            builder: (context,) {
-
-                              return Row(
-                                children: [
-                                  Expanded(
-                                      child: amountContainer(
-                                    "Cash",
-                                    amountController.totalAmountCash,
-                                    amountController.totalAddedCash,
-                                    amountController.totalWithdrawCash,
-                                  )),
-                                  const SizedBox(
-                                    width: 15,
-                                  ),
-                                  Expanded(
-                                      child: amountContainer(
-                                    "Card",
-                                    amountController.totalAmountCard,
-                                    amountController.totalAddedCard,
-                                    amountController.totalWithdrawCard,
-                                  )),
-                                  const SizedBox(
-                                    width: 15,
-                                  ),
-                                  Expanded(
-                                      child: amountContainer(
-                                    "Bank",
-                                    amountController.totalAmountBank,
-                                    amountController.totalAddedBank,
-                                    amountController.totalWithdrawBank,
-                                  ))
-                                ],
-                              );
-                            }),
+                        Row(
+                          children: [
+                            Expanded(
+                                child: amountContainer(
+                              "Cash",
+                                  transactionController.amountController.totalAmountCash,
+                                  transactionController.amountController.totalAddedCash,
+                                  transactionController.amountController.totalWithdrawCash,
+                            )),
+                            const SizedBox(
+                              width: 15,
+                            ),
+                            Expanded(
+                                child: amountContainer(
+                              "Card",
+                                  transactionController.amountController.totalAmountCard,
+                                  transactionController.amountController.totalAddedCard,
+                                  transactionController.amountController.totalWithdrawCard,
+                            )),
+                            const SizedBox(
+                              width: 15,
+                            ),
+                            Expanded(
+                                child: amountContainer(
+                              "Bank",
+                                  transactionController.amountController.totalAmountBank,
+                                  transactionController.amountController.totalAddedBank,
+                                  transactionController.amountController.totalWithdrawBank,
+                            ))
+                          ],
+                        ),
                         const SizedBox(
                           height: 20,
                         ),
@@ -463,23 +405,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
             children: [
               InkWell(
                 onTap: () {
-                  setState(() {
-                    if (selectedSign == '+') {
-                      selectedSign = 'both';
-                    } else {
-                      selectedSign = '+';
-                    }
-                  });
+                  transactionController.onSignSelection('+');
+                  setState(() {});
                 },
                 child: Container(
                     decoration: BoxDecoration(
-                        color: selectedSign == '+' ? Colors.green : null,
+                        color: transactionController.selectedSign == '+' ? Colors.green : null,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.black, width: 1)),
                     padding: const EdgeInsets.all(7.5),
                     child: Icon(
                       Icons.add,
-                      color: selectedSign == '+' ? Colors.white : Colors.green,
+                      color: transactionController.selectedSign == '+' ? Colors.white : Colors.green,
                     )),
               ),
               const Text("Recent Transactions",
@@ -489,23 +426,18 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
                       fontWeight: FontWeight.bold)),
               InkWell(
                 onTap: () {
-                  setState(() {
-                    if (selectedSign == '-') {
-                      selectedSign = 'both';
-                    } else {
-                      selectedSign = '-';
-                    }
-                  });
+                  transactionController.onSignSelection('-');
+                  setState(() {});
                 },
                 child: Container(
                     decoration: BoxDecoration(
-                        color: selectedSign == '-' ? Colors.red : null,
+                        color: transactionController.selectedSign == '-' ? Colors.red : null,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.black, width: 1)),
                     padding: const EdgeInsets.all(7.5),
                     child: Icon(
                       Icons.remove,
-                      color: selectedSign == '-' ? Colors.white : Colors.red,
+                      color: transactionController.selectedSign == '-' ? Colors.white : Colors.red,
                     )),
               )
             ],
@@ -516,19 +448,5 @@ class _TransactionsScreenState extends State<TransactionsScreen> {
         ),
       ],
     );
-  }
-
-  bool matchFilters(TransactionModel transaction) {
-    return ((transaction.category == selectedCategory) ||
-            selectedCategory.toLowerCase() == 'all categories') &&
-        ((transaction.transactionType == selectedPaymentMode) ||
-            selectedPaymentMode!.toLowerCase() == 'all payment modes') &&
-        (transaction.desc
-                .toLowerCase()
-                .contains(searchController.text.toLowerCase()) ||
-            transaction.category
-                .toLowerCase()
-                .contains(searchController.text.toLowerCase())) &&
-        (transaction.transactionSign == selectedSign || selectedSign == 'both');
   }
 }

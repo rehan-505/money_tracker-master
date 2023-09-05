@@ -9,6 +9,7 @@ import 'package:money_tracker/utils/db_operations.dart';
 import 'package:money_tracker/utils/global_constants.dart';
 import 'package:money_tracker/widgets/dropdown_button.dart';
 import 'package:uuid/uuid.dart';
+import '../enums/paymentmode_enum.dart';
 import '../models/category.dart';
 import 'home_screen.dart';
 
@@ -182,7 +183,7 @@ class _EditTransactionScreenState extends State<EditTransactionScreen> {
 
 
 
-                MyDropDownButton(dropdownValue: selectedPaymentMode, items: const ["cash","card"], function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
+                MyDropDownButton(dropdownValue: selectedPaymentMode, items: PaymentMode.values.map((e) => e.name).toList(), function: (String v) { selectedPaymentMode = v ;},hintText: "Select Payment Mode"),
 
                 const SizedBox(
                   height: 15,

@@ -136,17 +136,18 @@ class _HomeScreenState extends State<HomeScreen> {
                 const SizedBox(
                   width: 20,
                 ),
-                InkWell(
-                  child:
-                      Icon(fullScreen ? Icons.zoom_in_map : Icons.zoom_out_map),
-                  onTap: () {
-                    setState(() {
-                      fullScreen = !fullScreen;
-                    });
-                  },
-                ),
-                const SizedBox(
-                  width: 20,
+                if(isAdmin)
+                Padding(
+                  padding: const EdgeInsets.only(right: 20.0),
+                  child: InkWell(
+                    child:
+                        Icon(fullScreen ? Icons.zoom_in_map : Icons.zoom_out_map),
+                    onTap: () {
+                      setState(() {
+                        fullScreen = !fullScreen;
+                      });
+                    },
+                  ),
                 ),
               ],
             ),
@@ -158,49 +159,50 @@ class _HomeScreenState extends State<HomeScreen> {
                     height: 10,
                   ),
                   if (isAdmin && !fullScreen)
-                    Row(
-                      children: [
-                        Expanded(
-                            child: amountContainer(
-                          "Cash",
-                          amountController.totalAmountCash,
-                          amountController.totalAddedCash,
-                          amountController.totalWithdrawCash,
-                        )),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        Expanded(
-                            child: amountContainer(
-                          "Card",
-                          amountController.totalAmountCard,
-                          amountController.totalAddedCard,
-                          amountController.totalWithdrawCard,
-                        )),
-                        const SizedBox(
-                          width: 15,
-                        ),
-                        Expanded(
-                            child: amountContainer(
-                          "Bank",
-                          amountController.totalAmountBank,
-                          amountController.totalAddedBank,
-                          amountController.totalWithdrawBank,
-                        ))
-                      ],
+                    Padding(
+                      padding: const EdgeInsets.only(bottom: 20.0),
+                      child: Row(
+                        children: [
+                          Expanded(
+                              child: amountContainer(
+                            "Cash",
+                            amountController.totalAmountCash,
+                            amountController.totalAddedCash,
+                            amountController.totalWithdrawCash,
+                          )),
+                          const SizedBox(
+                            width: 15,
+                          ),
+                          Expanded(
+                              child: amountContainer(
+                            "Card",
+                            amountController.totalAmountCard,
+                            amountController.totalAddedCard,
+                            amountController.totalWithdrawCard,
+                          )),
+                          const SizedBox(
+                            width: 15,
+                          ),
+                          Expanded(
+                              child: amountContainer(
+                            "Bank",
+                            amountController.totalAmountBank,
+                            amountController.totalAddedBank,
+                            amountController.totalWithdrawBank,
+                          ))
+                        ],
+                      ),
                     ),
-                  const SizedBox(
-                    height: 20,
-                  ),
+                  if (!fullScreen)
                   buttonsRow(),
                   const SizedBox(height: 20),
-                  const Text("Recent Transactions",
-                      style: TextStyle(
-                          color: Colors.black,
+                  Text("Today's Transactions${isAdmin ? " (${snapshot.data?.size ?? 0})" : ""}",
+                      style:  TextStyle(
+                          color: Theme.of(context).primaryColor,
                           fontSize: 16,
                           fontWeight: FontWeight.bold)),
                   const SizedBox(
-                    height: 10,
+                    height: 5,
                   ),
                   Expanded(
                     child: Builder(
@@ -237,6 +239,7 @@ class _HomeScreenState extends State<HomeScreen> {
 
                           return
                             ListView.builder(
+                              padding: EdgeInsets.zero,
                               // shrinkWrap: true,
                               // cacheExtent: isAdmin ? null : 2000,
                               itemCount: snapshot.data!.size,
@@ -285,7 +288,7 @@ class _HomeScreenState extends State<HomeScreen> {
                         Text(
                           '+',
                           style: TextStyle(
-                              color: Colors.green,
+                              color: Colors.white,
                               fontWeight: FontWeight.bold,
                               fontSize: 40),
                         )
@@ -357,7 +360,7 @@ class _HomeScreenState extends State<HomeScreen> {
                   Expanded(
                       child: ElevatedButton(
                           onPressed: () {
-                            Get.to(const TransactionsScreen());
+                            Get.to( TransactionsScreen());
                           },
                           child: const Text("Transactions")))
                 ],

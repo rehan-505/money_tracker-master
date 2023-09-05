@@ -34,7 +34,7 @@ void main() async{
   PermissionStatus permissionStatusNotification = await Permission.notification.request();
   PermissionStatus permissionStatusBatteryOpt = await Permission.ignoreBatteryOptimizations.request();
   //
-  print("permissionStatusNotification ${permissionStatusNotification}");
+  print("permissionStatusNotification $permissionStatusNotification");
   print("permissionStatusBatteryOpt $permissionStatusBatteryOpt");
 
 
@@ -66,9 +66,9 @@ class MyApp extends StatelessWidget {
     return GetMaterialApp(
       title: 'Flutter Demo',
       theme: ThemeData(
-        primarySwatch: Colors.deepPurple,
+        primarySwatch: Colors.green,
       ),
-      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("09-09-2023")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
+      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("14-09-2023")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
     );
   }
 }

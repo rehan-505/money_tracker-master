@@ -45,12 +45,14 @@ class _UserTransactionsState extends State<UserTransactions> {
                       child: TextFormField(
                         controller: startTimeController,
                         onTap: () async {
-                          selectedStartDate = await showDatePicker(
+                          DateTime? pickedDate = await showDatePicker(
                               context: context,
                               initialDate: DateTime.now(),
                               firstDate: DateTime(2020),
                               lastDate: DateTime(2025));
-                          if (selectedStartDate != null) {
+                          print('pickedDate: ${pickedDate}');
+                          if (pickedDate != null && pickedDate != selectedStartDate) {
+                            selectedStartDate = pickedDate;
                             startTimeController.text =
                                 DateFormat("dd-MM-yyyy")
                                     .format(selectedStartDate!)
@@ -85,12 +87,13 @@ class _UserTransactionsState extends State<UserTransactions> {
                       child: TextFormField(
                         controller: endTimeController,
                         onTap: () async {
-                          selectedEndDate = await showDatePicker(
+                          DateTime? pickedDate  = await showDatePicker(
                               context: context,
                               initialDate: DateTime.now(),
                               firstDate: DateTime(2020),
                               lastDate: DateTime(2025));
-                          if (selectedEndDate != null) {
+                          if (pickedDate != null && pickedDate != selectedEndDate) {
+                            selectedEndDate = pickedDate;
                             endTimeController.text =
                                 DateFormat("dd-MM-yyyy")
                                     .format(selectedEndDate!)
@@ -148,59 +151,74 @@ class _UserTransactionsState extends State<UserTransactions> {
                 )
               ],
             ),
+            Expanded(child:
+            (selectedStartDate==null || selectedEndDate==null) ?
+            const Center(
+              child: Text("Please select start and end date"),
+            ) :
             FutureBuilder(
-                future: (selectedStartDate == null || selectedEndDate == null)
-                    ? FirebaseFirestore.instance
-                    .collection(Collections.transactions)
-                    .orderBy("createdAt", descending: true)
-                    .get()
-                    : FirebaseFirestore.instance
+                future: FirebaseFirestore.instance
                     .collection(Collections.transactions)
                     .where("createdAt",
-                    isGreaterThanOrEqualTo: selectedStartDate,
-                    isLessThanOrEqualTo: selectedEndDate)
+                    isGreaterThanOrEqualTo: selectedStartDate ?? DateTime(2000),
+                    isLessThanOrEqualTo: selectedEndDate?.add(const Duration(days: 1)) ?? DateTime.now()).
+                where('createdBy.id',isEqualTo: widget.appUser.id)
                     .orderBy("createdAt", descending: true)
                     .get(),
                 builder: (context,
                     AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>>
                     snapshot) {
-                  if (!snapshot.hasData) {
-                    return const Center(
-                      child: Text("No Transactions to show"),
-                    );
-                  }
+
+
                   if (snapshot.connectionState == ConnectionState.waiting) {
                     return const Center(
-                      child: Text("Loading Transactions"),
+                      child: CircularProgressIndicator(),
                     );
                   }
 
-                  if (snapshot.data!.docs.isEmpty) {
+                  if (snapshot.data?.docs.isEmpty ?? true) {
                     return const Center(
                       child: Text("No Transactions to show"),
                     );
                   }
 
 
-                  return Expanded(
-                    child: ListView.builder(
-                        itemCount: isAdmin ? snapshot.data!.size : 10,
-                        itemBuilder: (context, index) {
+                  return Column(
+                    children: [
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Text('Total Transactions: ${snapshot.data!.size}',
+                        style: TextStyle(
+                            color: Theme.of(context).primaryColor,
+                            fontSize: 18,
+                            fontWeight: FontWeight.bold
+                        ),),
+                      const SizedBox(
+                        height: 10,
+                      ),
+                      Expanded(
+                        child: ListView.builder(
+                            itemCount: isAdmin ? snapshot.data!.size : 10,
+                            itemBuilder: (context, index) {
 
-                          TransactionModel transaction = TransactionModel.fromMap(
-                              snapshot.data!.docs[index].data());
-                          if(transaction.createdBy.id!=widget.appUser.id){
-                            return const SizedBox();
-                          }
+                              TransactionModel transaction = TransactionModel.fromMap(
+                                  snapshot.data!.docs[index].data());
+                              if(transaction.createdBy.id!=widget.appUser.id){
+                                return const SizedBox();
+                              }
 
 
-                          return TransactionCard(transactionModel: transaction);
+                              return TransactionCard(transactionModel: transaction);
 
-                        }
+                            }
 
-                    ),
+                        ),
+                      ),
+                    ],
                   );
                 }),
+            )
           ],
         ),
       ),

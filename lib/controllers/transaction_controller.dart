@@ -3,21 +3,20 @@ import 'package:get/get_state_manager/get_state_manager.dart';
 import 'package:flutter/material.dart';
 import 'package:money_tracker/controllers/transaction_screen_amount_controller.dart';
 import '../models/transaction.dart';
-import 'filters_collapse_controller.dart';
 
 class TransactionController extends GetxController{
   DateTime? selectedStartDate;
   DateTime? selectedEndDate;
   String selectedCategory = "All Categories";
-
   RxList<TransactionModel> allTransactions = <TransactionModel>[].obs;
   RxList<TransactionModel> filteredTransactions = <TransactionModel>[].obs;
+
+  Rx<bool> searchByAmount = true.obs;
 
   final TransactionScreenAmountController amountController =
   TransactionScreenAmountController();
 
-  final FiltersCollapseController collapseController =
-  FiltersCollapseController();
+  Rx<bool> collapse = false.obs;
 
   String? selectedPaymentMode = 'All Payment Modes';
 
@@ -51,12 +50,24 @@ class TransactionController extends GetxController{
             .contains(searchController.text.toLowerCase()) ||
             transaction.category
                 .toLowerCase()
-                .contains(searchController.text.toLowerCase())) &&
+                .contains(searchController.text.toLowerCase())
+            || filterByAmount(transaction)
+        ) &&
         (transaction.transactionSign == selectedSign || selectedSign == 'both') &&
         createdAt.isAfter(selectedStartDate ?? DateTime(2000)) && createdAt.isBefore(selectedEndDate ?? DateTime.now());
 
     return match;
 
+  }
+
+  bool filterByAmount(TransactionModel transaction){
+    if(searchByAmount.value){
+      double? searchAmount = double.tryParse(searchController.text.trim());
+      if(searchAmount!=null){
+        return transaction.amount.toInt() == searchAmount.toInt();
+      }
+    }
+    return false;
   }
 
   void setContainerAmounts(List<TransactionModel> transactionsList) {

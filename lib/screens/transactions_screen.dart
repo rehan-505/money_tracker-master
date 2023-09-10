@@ -94,11 +94,12 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
     debugPrint('total transactions after filtering: ${transactionsList.length}');
 
     if(transactionsList.isEmpty) {
-      return Column(
+      return ListView(
         children: [
           _buildUpperArea(),
           const SizedBox(height: 10,),
           const Center(child: Text('No transactions found')),
+          const SizedBox(height: 10,),
         ],
       );
     }
@@ -127,6 +128,7 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                 child: ElevatedButton(
                     onPressed: () {
                       transactionController.filterList();
+                      transactionController.collapse.value = true;
                       setState(() {});
                     },
                     child: const Text("Apply"))),
@@ -149,6 +151,19 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
     );
   }
 
+  Widget _buildOnlyAmountSearchCheckbox(){
+    return Row(
+      children: [
+        Obx(() => Checkbox(
+            value: transactionController.searchByAmount.value,
+            onChanged: (value) {
+              transactionController.searchByAmount.value = value ?? false;
+            })),
+        const Text("Search by amount", style: TextStyle(fontSize: 16,fontWeight: FontWeight.w500),),
+      ],
+    );
+  }
+
   Widget _buildUpperArea() {
 
     // return SizedBox();
@@ -160,27 +175,31 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
         ),
         Obx(() => InkWell(
               onTap: () {
-                transactionController.collapseController.collapse.value =
-                    !transactionController.collapseController.collapse.value;
+                transactionController.collapse.value =
+                    !transactionController.collapse.value;
               },
               child: Row(
                 children: [
-                  Text(transactionController.collapseController.collapse.value
+                  Text(transactionController.collapse.value
                       ? "Expand Filters"
-                      : "Collapse Filters"),
-                  const Icon(Icons.arrow_drop_down_sharp),
+                      : "Collapse Filters",
+                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  ),
+                  Icon(
+                      transactionController.collapse.value? Icons.arrow_drop_down_sharp :
+                      Icons.arrow_drop_up_sharp),
                 ],
               ),
             )),
+        const SizedBox(
+          height: 20,
+        ),
         Obx(() => Container(
-              child: transactionController.collapseController.collapse.value
+              child: transactionController.collapse.value
                   ? const SizedBox()
                   : Column(
                       mainAxisSize: MainAxisSize.min,
                       children: [
-                        const SizedBox(
-                          height: 20,
-                        ),
                         Row(
                           children: [
                             Expanded(
@@ -339,6 +358,10 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                           },
                           hintText: "Select Payment Mode",
                         ),
+                        const SizedBox(
+                          height: 10,
+                        ),
+                        _buildOnlyAmountSearchCheckbox(),
                         const SizedBox(
                           height: 10,
                         ),

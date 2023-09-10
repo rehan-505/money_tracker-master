@@ -9,6 +9,7 @@ import 'package:money_tracker/screens/add_money_screen.dart';
 import 'package:money_tracker/screens/show_users_screen.dart';
 import 'package:money_tracker/screens/subtract_money.dart';
 import 'package:money_tracker/screens/transactions_screen.dart';
+import 'package:money_tracker/secret/admin_emails.dart';
 import 'package:money_tracker/utils/collection_names.dart';
 import 'package:money_tracker/widgets/drawer.dart';
 import 'package:money_tracker/widgets/transaction_card.dart';
@@ -28,8 +29,7 @@ class _HomeScreenState extends State<HomeScreen> {
   @override
   void initState() {
     super.initState();
-    if (FirebaseAuth.instance.currentUser!.email!
-        .contains(RegExp("admin@dl"))) {
+    if (adminEmails.any((element) => element==FirebaseAuth.instance.currentUser!.email!)) {
       isAdmin = true;
       debugPrint("idAdmin is true");
     } else {

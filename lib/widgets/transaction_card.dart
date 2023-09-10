@@ -1,9 +1,11 @@
 import 'dart:ui';
 
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
+import 'package:money_tracker/enums/paymentmode_enum.dart';
 import 'package:money_tracker/models/transaction.dart';
 import 'package:money_tracker/screens/edit_transaction.dart';
 import 'package:money_tracker/utils/collection_names.dart';
@@ -42,19 +44,31 @@ class _TransactionCardState extends State<TransactionCard> {
               const SizedBox(height: 5,),
 
               Row(
+
+                crossAxisAlignment: CrossAxisAlignment.start,
                 mainAxisAlignment: MainAxisAlignment.spaceBetween,
                 children:  [
                   SizedBox(
-                      width: Get.width/2,
+                      width: Get.width*0.45,
                       child: Text("${widget.transactionModel.createdBy.name.capitalizeFirst!} has ${ (widget.transactionModel.transactionSign == '+') ? "added" : "withdrawn"} ${widget.transactionModel.amount}", style: const TextStyle(color: Colors.black, fontWeight: FontWeight.bold,fontSize: 16),)),
+                  SizedBox(width: 10,),
                   // const Spacer(),
                   Flexible(
                     child: Row(
-                      mainAxisSize: MainAxisSize.min,
+                      // mainAxisSize: MainAxisSize.min,
+                      mainAxisAlignment: MainAxisAlignment.spaceBetween,
                       children: [
-                        Text(widget.transactionModel.transactionType.capitalizeFirst!,style: const TextStyle(fontSize: 16, )),
-                        const SizedBox(width: 10,),
-                        Flexible(child: Text("${widget.transactionModel.transactionSign} ${(widget.transactionModel.amount/widget.transactionModel.amount.toInt())==1 ? widget.transactionModel.amount.toInt() : widget.transactionModel.amount }", style: TextStyle(color: widget.transactionModel.transactionSign=="+" ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 20),)),
+                        Expanded(
+                          flex: 1,
+                            child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text(widget.transactionModel.transactionType.capitalizeFirst!,style: TextStyle(fontSize: 16, color: getCategoryColor(),fontWeight: FontWeight.bold )))),
+                        SizedBox(width: 5,),
+                        Expanded(
+                            flex: 2,
+                            child: Align(
+                            alignment: Alignment.centerRight,
+                            child: Text("${widget.transactionModel.transactionSign} ${(widget.transactionModel.amount/widget.transactionModel.amount.toInt())==1 ? widget.transactionModel.amount.toInt() : widget.transactionModel.amount }", style: TextStyle(color: widget.transactionModel.transactionSign=="+" ? Colors.green : Colors.red, fontWeight: FontWeight.bold, fontSize: 20),))),
                       ],
                     ),
                   ),
@@ -136,6 +150,18 @@ class _TransactionCardState extends State<TransactionCard> {
         ),
       ),
     );
+  }
+
+  Color getCategoryColor(){
+    try{
+     return paymentModeColorMap[PaymentMode.values.firstWhere((element) => element.name==widget.transactionModel.transactionType)]!;
+     }
+    catch(e){
+      if(kDebugMode) {
+        print(e);
+      }
+      return Colors.black;
+    }
   }
 
   sendChangeNotification(String username)async{

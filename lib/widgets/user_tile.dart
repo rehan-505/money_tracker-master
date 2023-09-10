@@ -6,6 +6,7 @@ import 'package:get/get_core/get_core.dart';
 import 'package:get/get_navigation/get_navigation.dart';
 import 'package:money_tracker/models/user.dart';
 import 'package:money_tracker/screens/users_transaction.dart';
+import 'package:money_tracker/secret/admin_emails.dart';
 
 class SingleUserTile extends StatelessWidget {
   const SingleUserTile({Key? key, required this.user}) : super(key: key);
@@ -15,7 +16,7 @@ class SingleUserTile extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Padding(
-      padding: const EdgeInsets.only(bottom: 16.0),
+      padding: const EdgeInsets.only(bottom: 16.0*4),
       child: Material(
         elevation: 2,
         child: Container(
@@ -23,7 +24,7 @@ class SingleUserTile extends StatelessWidget {
           child: Row(
             crossAxisAlignment: CrossAxisAlignment.start,
             children: [
-              _buildPersonIcon(),
+              _buildPersonIcon(context),
               const SizedBox(
                 width: 10,
               ),
@@ -50,7 +51,7 @@ class SingleUserTile extends StatelessWidget {
                 mainAxisSize: MainAxisSize.min,
                 children: [
                   InkWell(
-                    onTap: (){
+                    onTap: () {
                       Get.to(UserTransactions(appUser: user));
                     },
                     child: const Icon(
@@ -61,48 +62,48 @@ class SingleUserTile extends StatelessWidget {
                   const SizedBox(
                     height: 15,
                   ),
-                  user.email.contains(RegExp("admin@dl"))
-                      ? SizedBox()
-                      : InkWell(
-                    onTap: () async{
-                      print("hi");
-                      await showDialog(
-                          context: context,
-                          barrierColor: Colors.transparent,
-                          builder: (BuildContext ctx) {
-                            return                       BackdropFilter(
-                              filter: ImageFilter.blur(sigmaX: 2.0, sigmaY: 2.0),
-                              child: AlertDialog(
-                                elevation: 10,
-                                content: const Text('Are You Sure You Want To Delete This User ?'),
-                                actions: [
-                                  TextButton(
-                                      onPressed: () async {
-                                        Navigator.of(context).pop();
-                                        await FirebaseFirestore.instance
-                                            .collection('users')
-                                            .doc(user.id)
-                                            .delete();
-
-                                      },
-                                      child: const Text(
-                                        'Yes',
-                                        style: TextStyle(color: Colors.brown),
-                                      )),
-                                  TextButton(
-                                      onPressed: () {
-                                        Navigator.of(context).pop();
-                                      },
-                                      child:
-                                      const Text('No', style: TextStyle(color: Colors.brown)))
-                                ],
-                              ),
-                            );
-                          });
-
-
-                    },
-                          child: const Icon(
+                  if (!isUserAdmin(user.email))
+                    InkWell(
+                        onTap: () async {
+                          print("hi");
+                          await showDialog(
+                              context: context,
+                              barrierColor: Colors.transparent,
+                              builder: (BuildContext ctx) {
+                                return BackdropFilter(
+                                  filter: ImageFilter.blur(
+                                      sigmaX: 2.0, sigmaY: 2.0),
+                                  child: AlertDialog(
+                                    elevation: 10,
+                                    content: const Text(
+                                        'Are You Sure You Want To Delete This User ?'),
+                                    actions: [
+                                      TextButton(
+                                          onPressed: () async {
+                                            Navigator.of(context).pop();
+                                            await FirebaseFirestore.instance
+                                                .collection('users')
+                                                .doc(user.id)
+                                                .delete();
+                                          },
+                                          child: const Text(
+                                            'Yes',
+                                            style:
+                                                TextStyle(color: Colors.brown),
+                                          )),
+                                      TextButton(
+                                          onPressed: () {
+                                            Navigator.of(context).pop();
+                                          },
+                                          child: const Text('No',
+                                              style: TextStyle(
+                                                  color: Colors.brown)))
+                                    ],
+                                  ),
+                                );
+                              });
+                        },
+                        child: const Icon(
                           Icons.delete_forever_sharp,
                           color: Colors.red,
                         ))
@@ -115,13 +116,13 @@ class SingleUserTile extends StatelessWidget {
     );
   }
 
-  Widget _buildPersonIcon() {
+  Widget _buildPersonIcon(BuildContext context) {
     return Padding(
       padding: const EdgeInsets.only(top: 4.0),
       child: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           shape: BoxShape.circle,
-          color: Colors.blue,
+          color: Theme.of(context).primaryColor,
         ),
         padding: const EdgeInsets.all(6),
         child: Icon(

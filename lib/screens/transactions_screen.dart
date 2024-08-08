@@ -21,6 +21,7 @@ class TransactionsScreen extends StatelessWidget {
     return StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection(Collections.transactions)
+        .where('createdAt', isGreaterThan: DateTime.now().subtract(const Duration(days: 365)))
             .orderBy("createdAt", descending: true)
             .snapshots(),
         builder: (context,
@@ -37,6 +38,8 @@ class TransactionsScreen extends StatelessWidget {
               ),
             );
           }
+
+          debugPrint('transactions snapshot length: ${snapshot.data?.docs.length}');
 
          transactionController.allTransactions.value = (snapshot.data?.docs ?? [])
               .map((e) => TransactionModel.fromMap(e.data()))

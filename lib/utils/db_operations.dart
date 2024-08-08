@@ -4,13 +4,13 @@ import 'dart:ui';
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker/models/total_amount.dart';
 import 'package:money_tracker/models/user.dart';
 import 'package:money_tracker/utils/collection_names.dart';
 import 'package:http/http.dart' as http;
-import 'package:uuid/uuid.dart';
 
 class DBOperations{
 
@@ -136,7 +136,9 @@ class DBOperations{
   static Future initializeTotalAmountCollection() async{
     try{
       DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance.collection(Collections.totalAmount).doc(DateFormat('dd-MM-yyyy').format(DateTime.now())).get();
-      if(!documentSnapshot.exists){
+      bool exists = documentSnapshot.exists;
+      debugPrint("Document Exists: $exists");
+      if(!exists){
         FirebaseFirestore.instance.collection(Collections.totalAmount).doc(DateFormat('dd-MM-yyyy').format(DateTime.now())).set(const TotalAmount(cash: 0, card: 0,cardAllTimeAdded: 0,cardAllTimeWithdraw: 0,cashAllTimeAdded: 0,cashAllTimeWithdraw: 0,bank: 0,bankAllTimeAdded: 0,bankAllTimeWithdraw: 0).toMap());
       }
     }

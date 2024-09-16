@@ -1,5 +1,6 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:flutter/material.dart';
+import 'package:fluttertoast/fluttertoast.dart';
 import 'package:get/get.dart';
 import 'package:intl/intl.dart';
 import 'package:money_tracker/controllers/transaction_controller.dart';
@@ -11,98 +12,233 @@ import '../models/category.dart';
 import '../utils/global_functions.dart';
 import '../widgets/dropdown_button.dart';
 
-class TransactionsScreen extends StatelessWidget {
-  TransactionsScreen({Key? key}) : super(key: key);
+class TransactionsScreen extends StatefulWidget {
+  const TransactionsScreen({Key? key}) : super(key: key);
 
-  final TransactionController transactionController = Get.put(TransactionController());
+  @override
+  State<TransactionsScreen> createState() => _TransactionsScreenState();
+}
+
+class _TransactionsScreenState extends State<TransactionsScreen> {
+  final TransactionController transactionController =
+      Get.put(TransactionController());
 
   @override
   Widget build(BuildContext context) {
+    DateTime lowerLimit = DateTime.now().subtract(Duration(days: 365 * transactionController.backYearMultiplier));
+    DateTime upperLimit = lowerLimit.add(const Duration(days: 365));
     return StreamBuilder(
         stream: FirebaseFirestore.instance
             .collection(Collections.transactions)
-        .where('createdAt', isGreaterThan: DateTime.now().subtract(const Duration(days: 365)))
+            .where('createdAt',
+          //       isGreaterThan:
+          //           DateTime.now().subtract(const Duration(days: 365)),
+          // isLessThan:
+          isGreaterThan: lowerLimit,
+          isLessThan: upperLimit,
+        )
             .orderBy("createdAt", descending: true)
             .snapshots(),
         builder: (context,
             AsyncSnapshot<QuerySnapshot<Map<String, dynamic>>> snapshot) {
-          debugPrint('transactions upper stream builder: ${snapshot.connectionState}');
-          if (snapshot.connectionState == ConnectionState.waiting || !(snapshot.hasData)) {
+          // debugPrint('transactions upper stream builder: ${snapshot.connectionState}');
+          if (snapshot.connectionState == ConnectionState.waiting ||
+              !(snapshot.hasData)) {
             return Scaffold(
               appBar: AppBar(
                 centerTitle: true,
                 title: const Text('Kitaab'),
               ),
-              body:  Center(
-                child: snapshot.hasError ? const Text('Something went wrong') : const CircularProgressIndicator(),
+              body: Center(
+                child: snapshot.hasError
+                    ? const Text('Something went wrong')
+                    : const CircularProgressIndicator(),
               ),
             );
           }
 
-          debugPrint('transactions snapshot length: ${snapshot.data?.docs.length}');
+          debugPrint(
+              'transactions snapshot length: ${snapshot.data?.docs.length}');
 
-         transactionController.allTransactions.value = (snapshot.data?.docs ?? [])
-              .map((e) => TransactionModel.fromMap(e.data()))
-              .toList();
+          transactionController.allTransactions.value =
+              (snapshot.data?.docs ?? [])
+                  .map((e) => TransactionModel.fromMap(e.data()))
+                  .toList();
           transactionController.filterList();
-          debugPrint('total transactions before filtering: ${transactionController.allTransactions.length}');
+          debugPrint(
+              'total transactions before filtering: ${transactionController.allTransactions.length}');
 
-          return const TransactionBodyScreen();
+          return Scaffold(
+            appBar: AppBar(
+                title: const Text("Kitaab"),
+                centerTitle: true,
+                actions: [
+                  InkWell(
+                    onTap: () {
+                      Get.to(SearchScreen(
+                        transactions: transactionController.allTransactions,
+                      ));
+                    },
+                    child: const Icon(
+                      Icons.search,
+                      color: Colors.white,
+                    ),
+                  ),
+                  const SizedBox(
+                    width: 20,
+                  )
+                ]),
+            body: Column(
+              children: [
+                _buildDurationWidget(),
+                const Expanded(child: TransactionBodyScreen()),
+              ],
+            ),
+          );
         });
   }
+
+  Widget _buildDurationWidget() {
+    // String dateTime = DateFormat.yMMMd().format(DateTime.now());
+    DateTime lowerLimit = DateTime.now().subtract(Duration(days: 365 * transactionController.backYearMultiplier));
+    DateTime upperLimit = lowerLimit.add(const Duration(days: 365));
+    return Padding(
+      padding: const EdgeInsets.symmetric(horizontal: 16.0, vertical: 8),
+      child: Column(
+        children: [
+          const Text('Transactions Duration:',
+          style: TextStyle(
+            fontSize: 18,
+            fontWeight: FontWeight.bold
+          ),),
+          const SizedBox(
+            height: 10,
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: Text(
+                  'From: ${DateFormat.yMMMd().format(lowerLimit)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500
+                  ),
+                ),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              Expanded(
+                child: Text(
+                  'To: ${DateFormat.yMMMd().format(upperLimit)}',
+                  style: const TextStyle(
+                    fontSize: 16,
+                    fontWeight: FontWeight.w500
+                  ),
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(
+            height: 10,
+          ),
+          Row(
+            children: [
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.red),
+                  onPressed: () {
+                    transactionController.backYearMultiplier++;
+                    setState(() {});
+                  },
+                  child: const Text('Previous'),
+                ),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.green),
+                  onPressed:
+                  transactionController.backYearMultiplier==1 ? null :
+                      () {
+                    if(transactionController.backYearMultiplier==1){
+                      Fluttertoast.showToast(msg: 'Most recent transactions are already being displayed');
+                    }
+                    else{
+                      transactionController.backYearMultiplier--;
+                      setState(() {});
+                    }
+                  },
+                  child: const Text('Next'),
+                ),
+              ),
+              const SizedBox(
+                width: 10,
+              ),
+              Expanded(
+                child: ElevatedButton(
+                  style: ElevatedButton.styleFrom(backgroundColor: Colors.blue),
+                  onPressed: () {
+                    transactionController.backYearMultiplier = 1;
+                    setState(() {});
+                    Fluttertoast.showToast(msg: 'Most recent transactions are being displayed');
+                  },
+                  child: const Text('Clear'),
+                ),
+              ),
+            ],
+          )
+        ],
+      ),
+    );
+  }
+
 }
 
-
 class TransactionBodyScreen extends StatefulWidget {
-  const TransactionBodyScreen({Key? key,}) : super(key: key);
+  const TransactionBodyScreen({
+    Key? key,
+  }) : super(key: key);
 
   @override
   State<TransactionBodyScreen> createState() => _TransactionBodyScreenState();
 }
 
 class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
-
   final TransactionController transactionController = Get.find();
 
   @override
   Widget build(BuildContext context) {
-
     return Scaffold(
-      appBar: AppBar(title: const Text("Kitaab"), centerTitle: true, actions: [
-        InkWell(
-          onTap: () {
-            Get.to(SearchScreen(transactions: transactionController.allTransactions,));
-          },
-          child: const Icon(
-            Icons.search,
-            color: Colors.white,
-          ),
-        ),
-        const SizedBox(
-          width: 20,
-        )
-      ]),
+      // appBar: ,
       body: Padding(
         padding: const EdgeInsets.symmetric(horizontal: 16.0),
         child: Form(
           key: transactionController.formKey,
-          child: _buildTransactionsList(transactionController.filteredTransactions),
+          child: _buildTransactionsList(
+              transactionController.filteredTransactions),
         ),
       ),
     );
   }
 
-  Widget _buildTransactionsList(List<TransactionModel> transactionsList){
+  Widget _buildTransactionsList(List<TransactionModel> transactionsList) {
+    debugPrint(
+        'total transactions after filtering: ${transactionsList.length}');
 
-    debugPrint('total transactions after filtering: ${transactionsList.length}');
-
-    if(transactionsList.isEmpty) {
+    if (transactionsList.isEmpty) {
       return ListView(
         children: [
           _buildUpperArea(),
-          const SizedBox(height: 10,),
+          const SizedBox(
+            height: 10,
+          ),
           const Center(child: Text('No transactions found')),
-          const SizedBox(height: 10,),
+          const SizedBox(
+            height: 10,
+          ),
         ],
       );
     }
@@ -154,7 +290,7 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
     );
   }
 
-  Widget _buildOnlyAmountSearchCheckbox(){
+  Widget _buildOnlyAmountSearchCheckbox() {
     return Row(
       children: [
         Obx(() => Checkbox(
@@ -162,13 +298,15 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
             onChanged: (value) {
               transactionController.searchByAmount.value = value ?? false;
             })),
-        const Text("Search by amount", style: TextStyle(fontSize: 16,fontWeight: FontWeight.w500),),
+        const Text(
+          "Search by amount",
+          style: TextStyle(fontSize: 16, fontWeight: FontWeight.w500),
+        ),
       ],
     );
   }
 
   Widget _buildUpperArea() {
-
     // return SizedBox();
 
     return Column(
@@ -183,14 +321,15 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
               },
               child: Row(
                 children: [
-                  Text(transactionController.collapse.value
-                      ? "Expand Filters"
-                      : "Collapse Filters",
-                  style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
+                  Text(
+                    transactionController.collapse.value
+                        ? "Expand Filters"
+                        : "Collapse Filters",
+                    style: TextStyle(fontWeight: FontWeight.bold, fontSize: 16),
                   ),
-                  Icon(
-                      transactionController.collapse.value? Icons.arrow_drop_down_sharp :
-                      Icons.arrow_drop_up_sharp),
+                  Icon(transactionController.collapse.value
+                      ? Icons.arrow_drop_down_sharp
+                      : Icons.arrow_drop_up_sharp),
                 ],
               ),
             )),
@@ -207,24 +346,36 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                           children: [
                             Expanded(
                                 child: TextFormField(
-                              controller: transactionController.startTimeController,
+                              controller:
+                                  transactionController.startTimeController,
                               onTap: () async {
-                                transactionController.selectedStartDate = await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(2020),
-                                    lastDate: DateTime(2025));
-                                if (transactionController.selectedStartDate != null) {
-                                  transactionController.startTimeController.text =
+
+                                DateTime lowerLimit = DateTime.now()
+                                    .subtract( Duration(days: 365 * transactionController.backYearMultiplier));
+                                DateTime upperLimit = lowerLimit.add(const Duration(days: 365));
+
+                                transactionController.selectedStartDate =
+                                    await showDatePicker(
+                                        context: context,
+                                        initialDate: upperLimit,
+                                        firstDate: lowerLimit,
+                                        lastDate: upperLimit
+                                    );
+                                if (transactionController.selectedStartDate !=
+                                    null) {
+                                  transactionController
+                                          .startTimeController.text =
                                       DateFormat("dd-MM-yyyy")
-                                          .format(transactionController.selectedStartDate!)
+                                          .format(transactionController
+                                              .selectedStartDate!)
                                           .toString();
                                   // setState(() {});
                                 }
                               },
 
                               validator: (value) {
-                                if (transactionController.selectedStartDate == null) {
+                                if (transactionController.selectedStartDate ==
+                                    null) {
                                   return "field is required";
                                 }
                                 return null;
@@ -247,24 +398,35 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                             ),
                             Expanded(
                                 child: TextFormField(
-                              controller: transactionController.endTimeController,
+                              controller:
+                                  transactionController.endTimeController,
                               onTap: () async {
-                                transactionController.selectedEndDate = await showDatePicker(
-                                    context: context,
-                                    initialDate: DateTime.now(),
-                                    firstDate: DateTime(2020),
-                                    lastDate: DateTime(2025));
-                                if (transactionController.selectedEndDate != null) {
+
+                                DateTime lowerLimit = DateTime.now()
+                                    .subtract( Duration(days: 365 * transactionController.backYearMultiplier));
+                                DateTime upperLimit = lowerLimit.add(const Duration(days: 365));
+
+
+                                transactionController.selectedEndDate =
+                                    await showDatePicker(
+                                        context: context,
+                                        initialDate: upperLimit,
+                                        firstDate: lowerLimit,
+                                        lastDate: upperLimit);
+                                if (transactionController.selectedEndDate !=
+                                    null) {
                                   transactionController.endTimeController.text =
                                       DateFormat("dd-MM-yyyy")
-                                          .format(transactionController.selectedEndDate!)
+                                          .format(transactionController
+                                              .selectedEndDate!)
                                           .toString();
                                   // setState(() {});
                                 }
                               },
 
                               validator: (value) {
-                                if (transactionController.selectedEndDate == null) {
+                                if (transactionController.selectedEndDate ==
+                                    null) {
                                   return "field is required";
                                 }
                                 return null;
@@ -336,7 +498,8 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                               }
 
                               return MyDropDownButton(
-                                dropdownValue: transactionController.selectedCategory,
+                                dropdownValue:
+                                    transactionController.selectedCategory,
                                 items: stringCategories,
                                 function: (String v) {
                                   transactionController.selectedCategory = v;
@@ -349,7 +512,8 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                           height: 10,
                         ),
                         MyDropDownButton(
-                          dropdownValue: transactionController.selectedPaymentMode,
+                          dropdownValue:
+                              transactionController.selectedPaymentMode,
                           items: const [
                             'All Payment Modes',
                             'cash',
@@ -375,9 +539,12 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                             Expanded(
                                 child: amountContainer(
                               "Cash",
-                                  transactionController.amountController.totalAmountCash,
-                                  transactionController.amountController.totalAddedCash,
-                                  transactionController.amountController.totalWithdrawCash,
+                              transactionController
+                                  .amountController.totalAmountCash,
+                              transactionController
+                                  .amountController.totalAddedCash,
+                              transactionController
+                                  .amountController.totalWithdrawCash,
                             )),
                             const SizedBox(
                               width: 15,
@@ -385,9 +552,12 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                             Expanded(
                                 child: amountContainer(
                               "Card",
-                                  transactionController.amountController.totalAmountCard,
-                                  transactionController.amountController.totalAddedCard,
-                                  transactionController.amountController.totalWithdrawCard,
+                              transactionController
+                                  .amountController.totalAmountCard,
+                              transactionController
+                                  .amountController.totalAddedCard,
+                              transactionController
+                                  .amountController.totalWithdrawCard,
                             )),
                             const SizedBox(
                               width: 15,
@@ -395,9 +565,12 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                             Expanded(
                                 child: amountContainer(
                               "Bank",
-                                  transactionController.amountController.totalAmountBank,
-                                  transactionController.amountController.totalAddedBank,
-                                  transactionController.amountController.totalWithdrawBank,
+                              transactionController
+                                  .amountController.totalAmountBank,
+                              transactionController
+                                  .amountController.totalAddedBank,
+                              transactionController
+                                  .amountController.totalWithdrawBank,
                             ))
                           ],
                         ),
@@ -419,13 +592,17 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                 },
                 child: Container(
                     decoration: BoxDecoration(
-                        color: transactionController.selectedSign == '+' ? Colors.green : null,
+                        color: transactionController.selectedSign == '+'
+                            ? Colors.green
+                            : null,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.black, width: 1)),
                     padding: const EdgeInsets.all(7.5),
                     child: Icon(
                       Icons.add,
-                      color: transactionController.selectedSign == '+' ? Colors.white : Colors.green,
+                      color: transactionController.selectedSign == '+'
+                          ? Colors.white
+                          : Colors.green,
                     )),
               ),
               const Text("Recent Transactions",
@@ -440,13 +617,17 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                 },
                 child: Container(
                     decoration: BoxDecoration(
-                        color: transactionController.selectedSign == '-' ? Colors.red : null,
+                        color: transactionController.selectedSign == '-'
+                            ? Colors.red
+                            : null,
                         shape: BoxShape.circle,
                         border: Border.all(color: Colors.black, width: 1)),
                     padding: const EdgeInsets.all(7.5),
                     child: Icon(
                       Icons.remove,
-                      color: transactionController.selectedSign == '-' ? Colors.white : Colors.red,
+                      color: transactionController.selectedSign == '-'
+                          ? Colors.white
+                          : Colors.red,
                     )),
               )
             ],

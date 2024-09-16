@@ -10,6 +10,7 @@ class TransactionController extends GetxController{
   String selectedCategory = "All Categories";
   RxList<TransactionModel> allTransactions = <TransactionModel>[].obs;
   RxList<TransactionModel> filteredTransactions = <TransactionModel>[].obs;
+  int backYearMultiplier = 1;
 
   Rx<bool> searchByAmount = true.obs;
 

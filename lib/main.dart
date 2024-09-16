@@ -69,7 +69,7 @@ class MyApp extends StatelessWidget {
         primarySwatch: Colors.green,
         useMaterial3: false
       ),
-      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("14-09-2070")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
+      home: DateTime.now().isAfter(DateFormat("dd-MM-yyyy").parse("30-09-2024")) ?  const ContactDeveloper(): (FirebaseAuth.instance.currentUser==null ?  Login() : const HomeScreen()),
     );
   }
 }

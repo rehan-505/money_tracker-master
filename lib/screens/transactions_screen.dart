@@ -412,7 +412,8 @@ class _TransactionBodyScreenState extends State<TransactionBodyScreen> {
                                         context: context,
                                         initialDate: upperLimit,
                                         firstDate: lowerLimit,
-                                        lastDate: upperLimit);
+                                        lastDate: upperLimit.add(const Duration(days: 1))
+                                    );
                                 if (transactionController.selectedEndDate !=
                                     null) {
                                   transactionController.endTimeController.text =
